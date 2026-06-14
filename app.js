@@ -212,6 +212,8 @@ let lastSavedCategory = "";
 let lastSavedItemName = "";
 let uploadedImageData = "";
 let isCloudConnected = false;
+let currentViewName = "home";
+let isRestoringHistory = false;
 
 const views = {
   home: document.querySelector("#homeView"),
@@ -221,10 +223,24 @@ const views = {
   success: document.querySelector("#successView")
 };
 
-function showView(name) {
+function showView(name, options = {}) {
   Object.values(views).forEach((view) => view.classList.remove("active"));
   views[name].classList.add("active");
+  currentViewName = name;
+  if (!options.skipHistory && !isRestoringHistory) {
+    history.pushState({ view: name }, "", `#${name}`);
+  }
   window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function restoreViewFromHistory(state) {
+  const viewName = state?.view || "home";
+  if (!views[viewName]) {
+    return;
+  }
+  isRestoringHistory = true;
+  showView(viewName, { skipHistory: true });
+  isRestoringHistory = false;
 }
 
 function loadAssetData() {
@@ -884,6 +900,9 @@ document.querySelector("#formImageFile").addEventListener("change", (event) => {
 document.querySelectorAll("[data-go-home]").forEach((button) => {
   button.addEventListener("click", () => showView("home"));
 });
+
+history.replaceState({ view: "home" }, "", "#home");
+window.addEventListener("popstate", (event) => restoreViewFromHistory(event.state));
 
 setupCategoryOptions();
 renderCategories();
