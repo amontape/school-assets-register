@@ -90,18 +90,15 @@ button {
   gap: 14px;
 }
 
-.official-mark {
+.school-logo {
   align-items: center;
-  background: var(--blue);
   border: 3px solid #d7b45a;
   border-radius: 50%;
-  color: #fff;
-  display: flex;
-  font-size: 24px;
-  font-weight: 700;
-  height: 54px;
-  justify-content: center;
-  width: 54px;
+  display: block;
+  height: 64px;
+  object-fit: contain;
+  padding: 4px;
+  width: 64px;
 }
 
 .site-header p,
@@ -119,7 +116,7 @@ h3 {
 
 h1 {
   color: var(--blue-dark);
-  font-size: 25px;
+  font-size: 31px;
   line-height: 1.2;
 }
 
@@ -148,7 +145,7 @@ main {
 }
 
 .hero-box h2 {
-  font-size: 34px;
+  font-size: 42px;
   font-weight: 700;
   line-height: 1.2;
   margin-top: 2px;
