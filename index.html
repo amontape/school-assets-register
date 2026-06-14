@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ระบบทะเบียนครุภัณฑ์โรงเรียน</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="brand-block">
+        <div class="official-mark" aria-hidden="true">ท</div>
+        <div>
+          <p>ระบบทะเบียนครุภัณฑ์โรงเรียน</p>
+          <h1>ทะเบียนคุมทรัพย์สิน</h1>
+        </div>
+      </div>
+      <button id="homeButton" type="button">หน้าแรก</button>
+    </header>
+
+    <main>
+      <section class="view home-view active" id="homeView">
+        <div class="hero-box">
+          <p>ระบบงานพัสดุและครุภัณฑ์</p>
+          <h2>ทะเบียนคุมทรัพย์สิน</h2>
+          <span>บันทึก ค้นหา คำนวณค่าเสื่อม และจัดพิมพ์เอกสารราชการ</span>
+          <span class="sync-status" id="syncStatus">กำลังเชื่อมต่อฐานข้อมูลกลาง...</span>
+        </div>
+
+        <div class="choice-layout">
+          <article class="choice-card blue">
+            <span class="choice-number">ตัวเลือก 1</span>
+            <h3>แสดงหมวดครุภัณฑ์ทั้ง 16 หมวด</h3>
+            <p>เลือกหมวดเพื่อดูข้อมูลครุภัณฑ์ที่อยู่ในหมวดนั้น เช่น ครุภัณฑ์สำนักงาน มีเก้าอี้ โต๊ะสำนักงาน</p>
+            <button id="showCategoriesButton" type="button">ดูหมวดครุภัณฑ์</button>
+          </article>
+
+          <article class="choice-card green">
+            <span class="choice-number">ตัวเลือก 2</span>
+            <h3>เพิ่มครุภัณฑ์ใหม่</h3>
+            <p>กรอกข้อมูลตามแบบทะเบียนคุมทรัพย์สิน พร้อมระบุหมวดครุภัณฑ์จาก dropdown ระบบจะบันทึกไว้ในฐานข้อมูลกลาง</p>
+            <button id="showFormButton" type="button">เพิ่มครุภัณฑ์</button>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="categoryView">
+        <div class="section-heading">
+          <div>
+            <p>ตัวเลือก 1</p>
+            <h2>เลือกหมวดครุภัณฑ์</h2>
+          </div>
+          <button class="light-button" data-go-home type="button">กลับหน้าแรก</button>
+        </div>
+
+        <div class="category-grid" id="categoryGrid"></div>
+      </section>
+
+      <section class="view" id="itemsView">
+        <div class="section-heading">
+          <div>
+            <p id="selectedCategoryLabel">ข้อมูลของหมวดที่กดเข้ามา</p>
+            <h2 id="selectedCategoryTitle">ครุภัณฑ์สำนักงาน</h2>
+          </div>
+          <button class="light-button" id="backToCategoriesButton" type="button">กลับไปเลือกหมวด</button>
+        </div>
+
+        <div class="content-grid">
+          <div class="item-list" id="itemList"></div>
+          <article class="detail-panel" id="detailPanel">
+            <div class="asset-photo">
+              <span>รูปครุภัณฑ์</span>
+            </div>
+            <h3>เลือกครุภัณฑ์ด้านซ้าย</h3>
+            <p>เมื่อกดชื่อครุภัณฑ์ ระบบจะแสดงรายละเอียดและรูปภาพที่เพิ่มไว้</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="formView">
+        <div class="section-heading">
+          <div>
+            <p>ตัวเลือก 2</p>
+            <h2>เพิ่มครุภัณฑ์ใหม่</h2>
+          </div>
+          <button class="light-button" data-go-home type="button">กลับหน้าแรก</button>
+        </div>
+
+        <form class="asset-form" id="assetForm">
+          <div class="form-card">
+            <h3>ข้อมูลตามทะเบียนคุมทรัพย์สิน</h3>
+            <div class="form-grid">
+              <label>ส่วนราชการ<input id="formGovernment" placeholder="เช่น สพป.ขอนแก่น เขต 2"></label>
+              <label>หน่วยงาน<input id="formOrganization" placeholder="เช่น โรงเรียนบ้านทุ่งมน"></label>
+              <label>ผู้ขาย/ผู้รับจ้าง/ผู้บริจาค<input id="formSeller" placeholder="เช่น ร้าน/บริษัท/ผู้บริจาค"></label>
+              <label>หมวดครุภัณฑ์<select id="formCategory" required></select></label>
+              <label>ชื่อครุภัณฑ์<input id="formName" required placeholder="เช่น เก้าอี้สำนักงาน"></label>
+              <label>รหัสครุภัณฑ์<input id="formCode" placeholder="เช่น 7110-001-0001/67"></label>
+              <label>ลักษณะ/สมบัติ<input id="formFeature" placeholder="เช่น เก้าอี้มีพนักพิง"></label>
+              <label>รุ่นแบบ/ยี่ห้อ<input id="formModel" placeholder="เช่น Acer, HP, Modernform"></label>
+              <label>สถานที่ตั้ง<input id="formLocation" placeholder="เช่น ห้องธุรการ"></label>
+              <label>ผู้รับผิดชอบ<input id="formOwner" placeholder="เช่น ครูพัสดุ"></label>
+              <label>จำนวน<input id="formQuantity" inputmode="numeric" value="1"></label>
+              <label>ราคาต่อหน่วย<input id="formPrice" inputmode="decimal" placeholder="0.00"></label>
+              <label>อายุใช้งาน (ปี)<input id="formLife" inputmode="numeric" value="5"></label>
+              <label>วันที่ได้มา<input id="formDate" type="date"></label>
+              <label>คำนวณค่าเสื่อม<select id="formDepreciation">
+                <option value="yes">ต้องการ</option>
+                <option value="no">ไม่ต้องการ</option>
+              </select></label>
+              <label>ประเภทเงิน<select id="formBudget">
+                <option>เงินงบประมาณ</option>
+                <option>เงินนอกงบประมาณ</option>
+                <option>เงินบริจาค/เงินช่วยเหลือ</option>
+                <option>อื่น ๆ</option>
+              </select></label>
+              <label>วิธีการได้มา<select id="formMethod">
+                <option>ตกลงราคา</option>
+                <option>สอบราคา</option>
+                <option>ประกวดราคา</option>
+                <option>วิธีพิเศษ</option>
+                <option>รับบริจาค</option>
+                <option>เฉพาะเจาะจง</option>
+                <option>ประกาศเชิญชวนทั่วไป</option>
+                <option>คัดเลือก</option>
+              </select></label>
+              <label class="wide">อัปโหลดภาพจากเครื่อง<input id="formImageFile" type="file" accept="image/*"></label>
+              <label class="wide">ชื่อ/หมายเหตุรูปภาพ<input id="formImage" placeholder="เช่น รูปตู้เก็บเอกสาร"></label>
+              <label class="wide">หมายเหตุ<textarea id="formNote" rows="3" placeholder="รายละเอียดเพิ่มเติม"></textarea></label>
+            </div>
+            <div class="form-actions">
+              <button class="primary-button" type="submit">ใส่ข้อมูลเสร็จ</button>
+              <button class="light-button" type="reset">ล้างฟอร์ม</button>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <section class="view" id="successView">
+        <div class="success-card">
+          <h2>ใส่ข้อมูลเสร็จ</h2>
+          <p>ข้อมูลถูกเพิ่มไว้ในหมวดที่เลือกแล้ว สามารถกลับไปดูในหน้าหมวดครุภัณฑ์ได้ทันที</p>
+          <p class="save-note">ข้อมูลนี้ถูกบันทึกเข้าฐานข้อมูลกลางแล้ว เครื่องอื่นที่เปิดเว็บนี้จะเห็นข้อมูลเดียวกัน</p>
+          <div class="success-actions">
+            <button class="primary-button" id="viewSavedItemButton" type="button">ดูข้อมูลที่เพิ่ม</button>
+            <button class="light-button" data-go-home type="button">กลับหน้าแรก</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <section id="printArea" aria-hidden="true"></section>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
