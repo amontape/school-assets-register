@@ -283,8 +283,33 @@ function emptyAssetGroups() {
 }
 
 function removeLocalOnlyFields(item) {
-  const { imageData, _cloudId, ...cloudItem } = item;
+  const { _cloudId, ...cloudItem } = item;
   return cloudItem;
+}
+
+function compressImageFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("error", reject);
+    reader.addEventListener("load", () => {
+      const image = new Image();
+      image.addEventListener("error", reject);
+      image.addEventListener("load", () => {
+        const maxSize = 900;
+        const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+        const context = canvas.getContext("2d");
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.72));
+      });
+      image.src = String(reader.result || "");
+    });
+    reader.readAsDataURL(file);
+  });
 }
 
 function startCloudSync() {
@@ -876,7 +901,7 @@ document.querySelector("#viewSavedItemButton").addEventListener("click", () => {
   renderItems(lastSavedCategory || categories[0], lastSavedItemName);
 });
 
-document.querySelector("#formImageFile").addEventListener("change", (event) => {
+document.querySelector("#formImageFile").addEventListener("change", async (event) => {
   const file = event.target.files?.[0];
   uploadedImageData = "";
   if (!file) {
@@ -887,14 +912,15 @@ document.querySelector("#formImageFile").addEventListener("change", (event) => {
     alert("รูปนี้มีขนาดค่อนข้างใหญ่ อาจบันทึกในเครื่องไม่สำเร็จ แนะนำใช้รูปขนาดไม่เกินประมาณ 1 MB");
   }
 
-  const reader = new FileReader();
-  reader.addEventListener("load", () => {
-    uploadedImageData = String(reader.result || "");
+  try {
+    uploadedImageData = await compressImageFile(file);
     if (!document.querySelector("#formImage").value) {
       document.querySelector("#formImage").value = file.name;
     }
-  });
-  reader.readAsDataURL(file);
+  } catch (error) {
+    console.error("Cannot read image", error);
+    alert("อ่านรูปไม่สำเร็จ ลองเลือกรูปใหม่อีกครั้ง");
+  }
 });
 
 document.querySelectorAll("[data-go-home]").forEach((button) => {
