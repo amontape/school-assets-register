@@ -41,6 +41,13 @@
             <p>กรอกข้อมูลตามแบบทะเบียนคุมทรัพย์สิน พร้อมระบุหมวดครุภัณฑ์จาก dropdown ระบบจะบันทึกไว้ในฐานข้อมูลกลาง</p>
             <button id="showFormButton" type="button">เพิ่มครุภัณฑ์</button>
           </article>
+
+          <article class="choice-card gold">
+            <span class="choice-number">ตัวเลือก 3</span>
+            <h3>ดูครุภัณฑ์ตามปี พ.ศ.</h3>
+            <p>รวมครุภัณฑ์ที่อยู่ปีเดียวกัน โดยจับจากวันที่ได้มา หรือเลขท้ายรหัส เช่น /67 คือ พ.ศ. 2567</p>
+            <button id="showYearsButton" type="button">ดูตามปี พ.ศ.</button>
+          </article>
         </div>
       </section>
 
@@ -54,6 +61,18 @@
         </div>
 
         <div class="category-grid" id="categoryGrid"></div>
+      </section>
+
+      <section class="view" id="yearView">
+        <div class="section-heading">
+          <div>
+            <p>ตัวเลือก 3</p>
+            <h2>เลือกปี พ.ศ.</h2>
+          </div>
+          <button class="light-button" data-go-home type="button">กลับหน้าแรก</button>
+        </div>
+
+        <div class="category-grid" id="yearGrid"></div>
       </section>
 
       <section class="view" id="itemsView">

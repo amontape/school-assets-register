@@ -208,6 +208,7 @@ const depreciationRules = {
 let assetData = loadAssetData();
 let currentCategory = "";
 let currentSelectedIndex = -1;
+let currentListItems = [];
 let lastSavedCategory = "";
 let lastSavedItemName = "";
 let uploadedImageData = "";
@@ -218,6 +219,7 @@ let isRestoringHistory = false;
 const views = {
   home: document.querySelector("#homeView"),
   category: document.querySelector("#categoryView"),
+  year: document.querySelector("#yearView"),
   items: document.querySelector("#itemsView"),
   form: document.querySelector("#formView"),
   success: document.querySelector("#successView")
@@ -331,7 +333,9 @@ function startCloudSync() {
     isCloudConnected = true;
     saveAssetData();
     renderCategories();
-    if (currentCategory) {
+    if (currentCategory?.startsWith("__year:")) {
+      renderItemsByYear(currentCategory.replace("__year:", ""), lastSavedItemName);
+    } else if (currentCategory) {
       renderItems(currentCategory, lastSavedItemName);
     }
     updateSyncStatus("เชื่อมต่อฐานข้อมูลกลางแล้ว");
@@ -584,6 +588,47 @@ function renderCategories() {
   });
 }
 
+function getAssetYear(item) {
+  const text = [item.acquiredDate, item.code, item.name].filter(Boolean).join(" ");
+  const fullYear = text.match(/(?:25|26)\d{2}/);
+  if (fullYear) {
+    return fullYear[0];
+  }
+  const shortYear = text.match(/(?:\/|-)(\d{2})(?!\d)/);
+  return shortYear ? `25${shortYear[1]}` : "";
+}
+
+function getAllAssetsWithSource() {
+  return categories.flatMap((category) => (assetData[category] || []).map((item, index) => ({
+    ...item,
+    _sourceCategory: category,
+    _sourceIndex: index
+  })));
+}
+
+function renderYearGroups() {
+  const yearGrid = document.querySelector("#yearGrid");
+  yearGrid.replaceChildren();
+  const counts = getAllAssetsWithSource().reduce((groups, item) => {
+    const year = getAssetYear(item) || "ไม่ระบุปี";
+    groups[year] = (groups[year] || 0) + 1;
+    return groups;
+  }, {});
+
+  Object.entries(counts).sort((a, b) => b[0].localeCompare(a[0], "th")).forEach(([year, count]) => {
+    const button = document.createElement("button");
+    button.className = "category-card";
+    button.type = "button";
+    button.innerHTML = `<strong>พ.ศ. ${escapeHtml(year)}</strong><span>${count} รายการ</span>`;
+    button.addEventListener("click", () => renderItemsByYear(year));
+    yearGrid.append(button);
+  });
+
+  if (Object.keys(counts).length === 0) {
+    yearGrid.innerHTML = `<div class="item-button"><strong>ยังไม่มีข้อมูล</strong><span>เพิ่มครุภัณฑ์ก่อน แล้วระบบจะจัดกลุ่มปีให้</span></div>`;
+  }
+}
+
 function renderItems(category, selectedItemName = "") {
   currentCategory = category;
   document.querySelector("#selectedCategoryTitle").textContent = category;
@@ -592,7 +637,12 @@ function renderItems(category, selectedItemName = "") {
   const itemList = document.querySelector("#itemList");
   itemList.replaceChildren();
 
-  const items = assetData[category] ?? [];
+  const items = (assetData[category] ?? []).map((item, index) => ({
+    ...item,
+    _sourceCategory: category,
+    _sourceIndex: index
+  }));
+  currentListItems = items;
   if (items.length === 0) {
     const empty = document.createElement("div");
     empty.className = "item-button";
@@ -605,6 +655,35 @@ function renderItems(category, selectedItemName = "") {
       button.className = "item-button";
       button.type = "button";
       button.innerHTML = `<strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item.code || "ยังไม่มีรหัส")} | ${escapeHtml(item.location || "ยังไม่ระบุสถานที่")}</span>`;
+      button.addEventListener("click", () => renderDetail(item, index));
+      itemList.append(button);
+    });
+    const selectedItem = items.find((item) => item.name === selectedItemName) || items[0];
+    renderDetail(selectedItem, items.indexOf(selectedItem));
+  }
+
+  showView("items");
+}
+
+function renderItemsByYear(year, selectedItemName = "") {
+  currentCategory = `__year:${year}`;
+  document.querySelector("#selectedCategoryTitle").textContent = `ครุภัณฑ์ พ.ศ. ${year}`;
+  document.querySelector("#selectedCategoryLabel").textContent = "รวมครุภัณฑ์ของปีเดียวกัน";
+
+  const itemList = document.querySelector("#itemList");
+  itemList.replaceChildren();
+  const items = getAllAssetsWithSource().filter((item) => (getAssetYear(item) || "ไม่ระบุปี") === year);
+  currentListItems = items;
+
+  if (items.length === 0) {
+    itemList.innerHTML = `<div class="item-button"><strong>ยังไม่มีข้อมูลปีนี้</strong><span>ตรวจรหัสหรือวันที่ได้มาอีกครั้ง</span></div>`;
+    renderDetail(null);
+  } else {
+    items.forEach((item, index) => {
+      const button = document.createElement("button");
+      button.className = "item-button";
+      button.type = "button";
+      button.innerHTML = `<strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item._sourceCategory)} | ${escapeHtml(item.code || "-")}</span>`;
       button.addEventListener("click", () => renderDetail(item, index));
       itemList.append(button);
     });
@@ -732,7 +811,7 @@ function printAsset(item) {
         <div></div>
       </div>
       <div class="print-meta-row print-line">
-        <div>ประเภท : ${escapeHtml(currentCategory || "-")} - ${escapeHtml(item.name || "-")}</div>
+        <div>ประเภท : ${escapeHtml(item.category || currentCategory || "-")} - ${escapeHtml(item.name || "-")}</div>
         <div>รหัส : ${escapeHtml(item.code || "-")}</div>
         <div>แบบรุ่น : ${escapeHtml(item.model || "-")}</div>
       </div>
@@ -803,12 +882,23 @@ function printAsset(item) {
 }
 
 async function deleteCurrentAsset() {
-  if (!currentCategory || currentSelectedIndex < 0) {
+  if (currentSelectedIndex < 0) {
     return;
   }
 
-  const item = assetData[currentCategory]?.[currentSelectedIndex];
+  const item = currentListItems[currentSelectedIndex];
   if (!item) {
+    return;
+  }
+  const sourceCategory = item._sourceCategory || currentCategory;
+  const sourceItems = assetData[sourceCategory] || [];
+  let sourceIndex = item._sourceIndex;
+  if (sourceIndex < 0 || sourceItems[sourceIndex]?._cloudId !== item._cloudId) {
+    sourceIndex = sourceItems.findIndex((sourceItem) => (
+      item._cloudId ? sourceItem._cloudId === item._cloudId : sourceItem.name === item.name && sourceItem.code === item.code
+    ));
+  }
+  if (sourceIndex < 0) {
     return;
   }
 
@@ -817,7 +907,7 @@ async function deleteCurrentAsset() {
     return;
   }
 
-  assetData[currentCategory].splice(currentSelectedIndex, 1);
+  sourceItems.splice(sourceIndex, 1);
   saveAssetData();
   if (item._cloudId) {
     try {
@@ -828,7 +918,12 @@ async function deleteCurrentAsset() {
     }
   }
   renderCategories();
-  renderItems(currentCategory);
+  if (currentCategory.startsWith("__year:")) {
+    renderYearGroups();
+    renderItemsByYear(currentCategory.replace("__year:", ""));
+  } else {
+    renderItems(sourceCategory);
+  }
 }
 
 async function saveAsset(event) {
@@ -892,7 +987,18 @@ async function saveAsset(event) {
 document.querySelector("#homeButton").addEventListener("click", () => showView("home"));
 document.querySelector("#showCategoriesButton").addEventListener("click", () => showView("category"));
 document.querySelector("#showFormButton").addEventListener("click", () => showView("form"));
-document.querySelector("#backToCategoriesButton").addEventListener("click", () => showView("category"));
+document.querySelector("#showYearsButton").addEventListener("click", () => {
+  renderYearGroups();
+  showView("year");
+});
+document.querySelector("#backToCategoriesButton").addEventListener("click", () => {
+  if (currentCategory.startsWith("__year:")) {
+    renderYearGroups();
+    showView("year");
+  } else {
+    showView("category");
+  }
+});
 document.querySelector("#assetForm").addEventListener("submit", saveAsset);
 document.querySelector("#assetForm").addEventListener("reset", () => {
   uploadedImageData = "";

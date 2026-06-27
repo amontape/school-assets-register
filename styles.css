@@ -179,7 +179,7 @@ main {
 .choice-layout {
   display: grid;
   gap: 18px;
-  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  grid-template-columns: repeat(3, minmax(240px, 1fr));
   margin: 0 auto;
   max-width: 1180px;
 }
@@ -197,6 +197,10 @@ main {
 
 .choice-card.green {
   border-left-color: var(--green);
+}
+
+.choice-card.gold {
+  border-left-color: var(--gold);
 }
 
 .choice-card.blue {
