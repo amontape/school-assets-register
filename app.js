@@ -1028,6 +1028,10 @@ function setFormValue(selector, value) {
   }
 }
 
+function getFormValue(selector) {
+  return document.querySelector(selector)?.value || "";
+}
+
 function clearFileInput(selector) {
   const field = document.querySelector(selector);
   if (field) {
@@ -1100,7 +1104,7 @@ async function saveAsset(event) {
     life: document.querySelector("#formLife").value,
     acquiredDate: document.querySelector("#formDate").value,
     depreciation: document.querySelector("#formDepreciation").value,
-    customRate: document.querySelector("#formCustomRate").value,
+    customRate: getFormValue("#formCustomRate"),
     budget: document.querySelector("#formBudget").value,
     method: document.querySelector("#formMethod").value,
     image: document.querySelector("#formImage").value || "ยังไม่ได้เพิ่มรูป",
@@ -1188,10 +1192,10 @@ async function saveAsset(event) {
 }
 
 document.querySelector("#homeButton").addEventListener("click", () => showView("home"));
-document.querySelector("#quickAddButton").addEventListener("click", startNewAsset);
+document.querySelector("#quickAddButton")?.addEventListener("click", startNewAsset);
 document.querySelector("#showCategoriesButton").addEventListener("click", () => showView("category"));
 document.querySelector("#showFormButton").addEventListener("click", startNewAsset);
-document.querySelector("#showYearsButton").addEventListener("click", () => {
+document.querySelector("#showYearsButton")?.addEventListener("click", () => {
   renderYearGroups();
   showView("year");
 });
