@@ -423,6 +423,35 @@ function normalizeAssetCode(value) {
   return code.startsWith("บว.") ? code : `บว.${code.replace(/^บว\.?/, "")}`;
 }
 
+function parseAssetCodeRange(value) {
+  const code = String(value || "").replace(/^บว\.?/, "").trim();
+  const match = code.match(/(\d+)(?:\s*-\s*(\d+))?\s*\/\s*(\d{2,4})/);
+  if (!match) {
+    return null;
+  }
+  return {
+    start: Number(match[1]),
+    end: Number(match[2] || match[1]),
+    year: match[3],
+    width: match[1].length
+  };
+}
+
+function getNextAssetCodeForName(name, excludeRef = null) {
+  const normalizedName = String(name || "").trim();
+  const ranges = getAllAssetsWithSource().filter((item) => {
+    const sameName = String(item.name || "").trim() === normalizedName;
+    const sameItem = excludeRef && item._sourceCategory === excludeRef.sourceCategory && item._sourceIndex === excludeRef.sourceIndex;
+    return sameName && !sameItem;
+  }).map((item) => parseAssetCodeRange(item.code)).filter(Boolean);
+  if (ranges.length === 0) {
+    return "";
+  }
+  const latest = ranges.sort((a, b) => b.end - a.end)[0];
+  const next = String(latest.end + 1).padStart(latest.width, "0");
+  return `${next}/${latest.year}`;
+}
+
 function countSameAssetName(name, excludeRef = null) {
   const normalizedName = String(name || "").trim();
   if (!normalizedName) {
@@ -437,6 +466,7 @@ function countSameAssetName(name, excludeRef = null) {
 
 function updateNameCountHint() {
   const formName = document.querySelector("#formName");
+  const formCode = document.querySelector("#formCode");
   let hint = document.querySelector("#nameCountHint");
   if (!hint) {
     hint = document.createElement("small");
@@ -445,7 +475,13 @@ function updateNameCountHint() {
     formName.insertAdjacentElement("afterend", hint);
   }
   const count = countSameAssetName(formName.value, editingAssetRef);
-  hint.textContent = formName.value ? `ชื่อนี้มีแล้ว ${count} รายการ รายการนี้เป็นตัวที่ ${count + 1}` : "";
+  const nextCode = getNextAssetCodeForName(formName.value, editingAssetRef);
+  if (nextCode && !editingAssetRef && !formCode.value.trim()) {
+    formCode.value = nextCode;
+  }
+  hint.textContent = formName.value
+    ? `ชื่อนี้มีแล้ว ${count} รายการ รายการนี้เป็นตัวที่ ${count + 1}${nextCode ? ` เลขถัดไป ${normalizeAssetCode(nextCode)}` : ""}`
+    : "";
 }
 
 function formatPrintMoney(value) {
