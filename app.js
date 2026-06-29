@@ -605,7 +605,8 @@ function calculateDepreciation(item) {
   const totalValue = quantity * price;
   const acquiredDate = parseThaiDate(item.acquiredDate);
   const rule = getDepreciationRule(item.category || currentCategory, acquiredDate);
-  const life = Math.max(1, parseNumber(item.life || rule.life || "5"));
+  const manualLife = parseNumber(item.life);
+  const life = Math.max(1, manualLife > 0 ? manualLife : parseNumber(rule.life || "5"));
   const customRate = parseNumber(item.customRate);
   const rate = customRate > 0 ? customRate : (rule.rate || (100 / life));
   const annual = totalValue * rate / 100;
