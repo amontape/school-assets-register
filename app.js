@@ -1028,6 +1028,13 @@ function setFormValue(selector, value) {
   }
 }
 
+function clearFileInput(selector) {
+  const field = document.querySelector(selector);
+  if (field) {
+    field.value = "";
+  }
+}
+
 function startNewAsset() {
   editingAssetRef = null;
   uploadedImageData = "";
@@ -1067,8 +1074,8 @@ function startEditAsset(selectedItem) {
   setFormValue("#formMethod", item.method);
   setFormValue("#formImage", item.image);
   setFormValue("#formNote", item.note);
-  document.querySelector("#formImageFile").value = "";
-  document.querySelector("#formCameraFile").value = "";
+  clearFileInput("#formImageFile");
+  clearFileInput("#formCameraFile");
   updateNameCountHint();
   showView("form");
 }
@@ -1140,8 +1147,8 @@ async function saveAsset(event) {
     editingAssetRef = null;
     event.target.reset();
     document.querySelector("#formQuantity").value = "1";
-    document.querySelector("#formImageFile").value = "";
-    document.querySelector("#formCameraFile").value = "";
+    clearFileInput("#formImageFile");
+    clearFileInput("#formCameraFile");
     uploadedImageData = "";
     renderCategories();
     showView("success");
@@ -1173,8 +1180,8 @@ async function saveAsset(event) {
   event.target.reset();
   document.querySelector("#formQuantity").value = "1";
   updateFormLifeFromRule();
-  document.querySelector("#formImageFile").value = "";
-  document.querySelector("#formCameraFile").value = "";
+  clearFileInput("#formImageFile");
+  clearFileInput("#formCameraFile");
   uploadedImageData = "";
   renderCategories();
   showView("success");
@@ -1227,8 +1234,8 @@ async function handleImagePick(event) {
   }
 }
 
-document.querySelector("#formImageFile").addEventListener("change", handleImagePick);
-document.querySelector("#formCameraFile").addEventListener("change", handleImagePick);
+document.querySelector("#formImageFile")?.addEventListener("change", handleImagePick);
+document.querySelector("#formCameraFile")?.addEventListener("change", handleImagePick);
 document.querySelector("#formName").addEventListener("input", updateNameCountHint);
 document.querySelector("#formCode").addEventListener("blur", (event) => {
   event.target.value = normalizeAssetCode(event.target.value);
