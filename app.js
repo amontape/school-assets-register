@@ -377,7 +377,7 @@ function setupCategoryOptions() {
 }
 
 function parseNumber(value) {
-  const number = Number(String(value || "0").replace(/,/g, ""));
+  const number = Number(String(value || "0").replace(/,/g, "").replace(/%/g, "").trim());
   return Number.isFinite(number) ? number : 0;
 }
 
