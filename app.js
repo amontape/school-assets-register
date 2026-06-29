@@ -590,7 +590,8 @@ function calculateDepreciation(item) {
   const acquiredDate = parseThaiDate(item.acquiredDate);
   const rule = getDepreciationRule(item.category || currentCategory, acquiredDate);
   const life = rule.life || Math.max(1, parseNumber(item.life || "5"));
-  const rate = rule.rate || (100 / life);
+  const customRate = parseNumber(item.customRate);
+  const rate = customRate > 0 ? customRate : (rule.rate || (100 / life));
   const annual = totalValue * rate / 100;
   const schedule = [];
 
@@ -1057,6 +1058,7 @@ function startEditCurrentAsset() {
   setFormValue("#formLife", item.life);
   setFormValue("#formDate", toDateInputValue(item.acquiredDate));
   setFormValue("#formDepreciation", item.depreciation || "yes");
+  setFormValue("#formCustomRate", item.customRate);
   setFormValue("#formBudget", item.budget);
   setFormValue("#formMethod", item.method);
   setFormValue("#formImage", item.image);
@@ -1086,6 +1088,7 @@ async function saveAsset(event) {
     life: document.querySelector("#formLife").value,
     acquiredDate: document.querySelector("#formDate").value,
     depreciation: document.querySelector("#formDepreciation").value,
+    customRate: document.querySelector("#formCustomRate").value,
     budget: document.querySelector("#formBudget").value,
     method: document.querySelector("#formMethod").value,
     image: document.querySelector("#formImage").value || "ยังไม่ได้เพิ่มรูป",
