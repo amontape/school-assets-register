@@ -470,6 +470,13 @@ textarea {
   width: 100%;
 }
 
+.form-hint {
+  color: var(--muted);
+  display: block;
+  font-size: 13px;
+  margin-top: 2px;
+}
+
 input:focus,
 select:focus,
 textarea:focus {

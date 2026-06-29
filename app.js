@@ -415,6 +415,39 @@ function toDateInputValue(value) {
   return date ? date.toISOString().slice(0, 10) : "";
 }
 
+function normalizeAssetCode(value) {
+  const code = String(value || "").trim();
+  if (!code) {
+    return "";
+  }
+  return code.startsWith("บว.") ? code : `บว.${code.replace(/^บว\.?/, "")}`;
+}
+
+function countSameAssetName(name, excludeRef = null) {
+  const normalizedName = String(name || "").trim();
+  if (!normalizedName) {
+    return 0;
+  }
+  return getAllAssetsWithSource().filter((item) => {
+    const sameName = String(item.name || "").trim() === normalizedName;
+    const sameItem = excludeRef && item._sourceCategory === excludeRef.sourceCategory && item._sourceIndex === excludeRef.sourceIndex;
+    return sameName && !sameItem;
+  }).length;
+}
+
+function updateNameCountHint() {
+  const formName = document.querySelector("#formName");
+  let hint = document.querySelector("#nameCountHint");
+  if (!hint) {
+    hint = document.createElement("small");
+    hint.id = "nameCountHint";
+    hint.className = "form-hint";
+    formName.insertAdjacentElement("afterend", hint);
+  }
+  const count = countSameAssetName(formName.value, editingAssetRef);
+  hint.textContent = formName.value ? `ชื่อนี้มีแล้ว ${count} รายการ รายการนี้เป็นตัวที่ ${count + 1}` : "";
+}
+
 function formatPrintMoney(value) {
   return toThaiDigits(formatMoney(value));
 }
@@ -748,6 +781,7 @@ function renderDetail(item, index = -1) {
       <tr><th>ส่วนราชการ</th><td>${escapeHtml(item.government || "-")}</td></tr>
       <tr><th>หน่วยงาน</th><td>${escapeHtml(item.organization || "-")}</td></tr>
       <tr><th>รหัสครุภัณฑ์</th><td>${escapeHtml(item.code || "-")}</td></tr>
+      <tr><th>ลำดับชื่อซ้ำ</th><td>${escapeHtml(item.nameRunningNo ? `ตัวที่ ${item.nameRunningNo}` : "-")}</td></tr>
       <tr><th>ลักษณะ/สมบัติ</th><td>${escapeHtml(item.feature || "-")}</td></tr>
       <tr><th>รุ่นแบบ</th><td>${escapeHtml(item.model || "-")}</td></tr>
       <tr><th>สถานที่ตั้ง</th><td>${escapeHtml(item.location || "-")}</td></tr>
@@ -960,6 +994,7 @@ function startNewAsset() {
   document.querySelector("#assetForm").reset();
   document.querySelector("#formQuantity").value = "1";
   updateFormLifeFromRule();
+  updateNameCountHint();
   showView("form");
 }
 
@@ -991,6 +1026,7 @@ function startEditCurrentAsset() {
   setFormValue("#formImage", item.image);
   setFormValue("#formNote", item.note);
   document.querySelector("#formImageFile").value = "";
+  updateNameCountHint();
   showView("form");
 }
 
@@ -1004,7 +1040,7 @@ async function saveAsset(event) {
     organization: document.querySelector("#formOrganization").value,
     seller: document.querySelector("#formSeller").value,
     name: document.querySelector("#formName").value,
-    code: document.querySelector("#formCode").value,
+    code: normalizeAssetCode(document.querySelector("#formCode").value),
     feature: document.querySelector("#formFeature").value,
     model: document.querySelector("#formModel").value,
     location: document.querySelector("#formLocation").value,
@@ -1018,6 +1054,7 @@ async function saveAsset(event) {
     method: document.querySelector("#formMethod").value,
     image: document.querySelector("#formImage").value || "ยังไม่ได้เพิ่มรูป",
     imageData: uploadedImageData,
+    nameRunningNo: countSameAssetName(document.querySelector("#formName").value, editingAssetRef) + 1,
     note: document.querySelector("#formNote").value
   };
 
@@ -1141,6 +1178,10 @@ document.querySelector("#formImageFile").addEventListener("change", async (event
     console.error("Cannot read image", error);
     alert("อ่านรูปไม่สำเร็จ ลองเลือกรูปใหม่อีกครั้ง");
   }
+});
+document.querySelector("#formName").addEventListener("input", updateNameCountHint);
+document.querySelector("#formCode").addEventListener("blur", (event) => {
+  event.target.value = normalizeAssetCode(event.target.value);
 });
 
 document.querySelectorAll("[data-go-home]").forEach((button) => {
