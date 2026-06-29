@@ -1,5 +1,7 @@
 const STORAGE_KEY = "schoolAssetRegisterData";
 const ASSETS_COLLECTION = "assets";
+const FIXED_GOVERNMENT = "สพม.พระนครศรีอยุธยา";
+const FIXED_ORGANIZATION = "โรงเรียนบางไทรวิทยา";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBGE94WK8S7ZEP2XsdjcWQ5s5kAeK5mrxM",
@@ -1058,8 +1060,8 @@ function startEditAsset(selectedItem) {
   const { item, sourceCategory, sourceIndex } = sourceRef;
   editingAssetRef = { sourceCategory, sourceIndex, cloudId: item._cloudId || "" };
   uploadedImageData = item.imageData || "";
-  setFormValue("#formGovernment", item.government);
-  setFormValue("#formOrganization", item.organization);
+  setFormValue("#formGovernment", FIXED_GOVERNMENT);
+  setFormValue("#formOrganization", FIXED_ORGANIZATION);
   setFormValue("#formSeller", item.seller);
   setFormValue("#formCategory", item.category || sourceCategory);
   setFormValue("#formName", item.name);
@@ -1090,8 +1092,8 @@ async function saveAsset(event) {
   const category = document.querySelector("#formCategory").value;
   const item = {
     category,
-    government: document.querySelector("#formGovernment").value,
-    organization: document.querySelector("#formOrganization").value,
+    government: FIXED_GOVERNMENT,
+    organization: FIXED_ORGANIZATION,
     seller: document.querySelector("#formSeller").value,
     name: document.querySelector("#formName").value,
     code: normalizeAssetCode(document.querySelector("#formCode").value),
