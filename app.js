@@ -1280,7 +1280,7 @@ async function saveAsset(event) {
     clearFileInput("#formCameraFile");
     uploadedImageData = "";
     renderCategories();
-    showView("home");
+    renderItems(category, updatedItem.name);
     return;
   }
 
@@ -1313,7 +1313,7 @@ async function saveAsset(event) {
   clearFileInput("#formCameraFile");
   uploadedImageData = "";
   renderCategories();
-  showView("home");
+  renderItems(category, item.name);
 }
 
 document.querySelector("#homeButton").addEventListener("click", () => showView("home"));
