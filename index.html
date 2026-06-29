@@ -16,7 +16,7 @@
         </div>
       </div>
       <div class="header-actions">
-        <button id="quickAddButton" class="primary-button" type="button">เพิ่มครุภัณฑ์ใหม่</button>
+        <button id="quickAddButton" class="primary-button" type="button" onclick="forceShowForm()">เพิ่มครุภัณฑ์ใหม่</button>
         <button id="homeButton" type="button">หน้าแรก</button>
       </div>
     </header>
@@ -42,7 +42,7 @@
             <span class="choice-number">ตัวเลือก 2</span>
             <h3>เพิ่มครุภัณฑ์ใหม่</h3>
             <p>กรอกข้อมูลตามแบบทะเบียนคุมทรัพย์สิน พร้อมระบุหมวดครุภัณฑ์จาก dropdown ระบบจะบันทึกไว้ในฐานข้อมูลกลาง</p>
-            <button id="showFormButton" type="button">เพิ่มครุภัณฑ์</button>
+            <button id="showFormButton" type="button" onclick="forceShowForm()">เพิ่มครุภัณฑ์</button>
           </article>
 
           <article class="choice-card gold">
@@ -203,6 +203,13 @@
     <section id="printArea" aria-hidden="true"></section>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="app.js?v=20260629-3"></script>
+    <script>
+      function forceShowForm() {
+        document.querySelectorAll(".view").forEach((view) => view.classList.remove("active"));
+        document.querySelector("#formView")?.classList.add("active");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    </script>
+    <script src="app.js?v=20260629-4"></script>
   </body>
 </html>
