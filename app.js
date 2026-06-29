@@ -290,8 +290,7 @@ function removeLocalOnlyFields(item) {
   return cloudItem;
 }
 
-function getCurrentSourceRef() {
-  const item = currentListItems[currentSelectedIndex];
+function getSourceRefForItem(item) {
   if (!item) {
     return null;
   }
@@ -304,6 +303,10 @@ function getCurrentSourceRef() {
     ));
   }
   return sourceIndex < 0 ? null : { item, sourceCategory, sourceIndex };
+}
+
+function getCurrentSourceRef() {
+  return getSourceRefForItem(currentListItems[currentSelectedIndex]);
 }
 
 function compressImageFile(file) {
@@ -840,7 +843,7 @@ function renderDetail(item, index = -1) {
     ${renderDepreciation(item)}
   `;
 
-  document.querySelector("#editAssetButton").addEventListener("click", startEditCurrentAsset);
+  document.querySelector("#editAssetButton").addEventListener("click", () => startEditAsset(item));
   document.querySelector("#printAssetButton").addEventListener("click", () => printAsset(item));
   document.querySelector("#deleteAssetButton").addEventListener("click", deleteCurrentAsset);
 }
@@ -1037,9 +1040,10 @@ function startNewAsset() {
   showView("form");
 }
 
-function startEditCurrentAsset() {
-  const sourceRef = getCurrentSourceRef();
+function startEditAsset(selectedItem) {
+  const sourceRef = getSourceRefForItem(selectedItem) || getCurrentSourceRef();
   if (!sourceRef) {
+    alert("ยังแก้ไขรายการนี้ไม่ได้ กรุณากดเลือกรายการใหม่อีกครั้ง");
     return;
   }
   const { item, sourceCategory, sourceIndex } = sourceRef;
