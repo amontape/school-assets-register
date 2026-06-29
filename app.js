@@ -223,6 +223,7 @@ const views = {
   home: document.querySelector("#homeView"),
   category: document.querySelector("#categoryView"),
   year: document.querySelector("#yearView"),
+  name: document.querySelector("#nameView"),
   items: document.querySelector("#itemsView"),
   form: document.querySelector("#formView"),
   success: document.querySelector("#successView")
@@ -357,6 +358,8 @@ function startCloudSync() {
     renderCategories();
     if (currentCategory?.startsWith("__year:")) {
       renderItemsByYear(currentCategory.replace("__year:", ""), lastSavedItemName);
+    } else if (currentCategory?.startsWith("__name:")) {
+      renderItemsByName(currentCategory.replace("__name:", ""), lastSavedItemName);
     } else if (currentCategory) {
       renderItems(currentCategory, lastSavedItemName);
     }
@@ -732,6 +735,33 @@ function renderYearGroups() {
   }
 }
 
+function getAssetGroupName(item) {
+  return String(item.name || "").trim() || "ไม่ระบุชื่อ";
+}
+
+function renderNameGroups() {
+  const nameGrid = document.querySelector("#nameGrid");
+  nameGrid.replaceChildren();
+  const groups = getAllAssetsWithSource().reduce((result, item) => {
+    const name = getAssetGroupName(item);
+    result[name] = (result[name] || 0) + 1;
+    return result;
+  }, {});
+
+  Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0], "th")).forEach(([name, count]) => {
+    const button = document.createElement("button");
+    button.className = "category-card";
+    button.type = "button";
+    button.innerHTML = `<strong>${escapeHtml(name)}</strong><span>${count} รายการ</span>`;
+    button.addEventListener("click", () => renderItemsByName(name));
+    nameGrid.append(button);
+  });
+
+  if (Object.keys(groups).length === 0) {
+    nameGrid.innerHTML = `<div class="item-button"><strong>ยังไม่มีข้อมูล</strong><span>เพิ่มครุภัณฑ์ก่อน แล้วระบบจะจัดกลุ่มชื่อให้</span></div>`;
+  }
+}
+
 function renderItems(category, selectedItemName = "") {
   currentCategory = category;
   document.querySelector("#selectedCategoryTitle").textContent = category;
@@ -758,6 +788,35 @@ function renderItems(category, selectedItemName = "") {
       button.className = "item-button";
       button.type = "button";
       button.innerHTML = `<strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item.code || "ยังไม่มีรหัส")} | ${escapeHtml(item.location || "ยังไม่ระบุสถานที่")}</span>`;
+      button.addEventListener("click", () => renderDetail(item, index));
+      itemList.append(button);
+    });
+    const selectedItem = items.find((item) => item.name === selectedItemName) || items[0];
+    renderDetail(selectedItem, items.indexOf(selectedItem));
+  }
+
+  showView("items");
+}
+
+function renderItemsByName(name, selectedItemName = "") {
+  currentCategory = `__name:${name}`;
+  document.querySelector("#selectedCategoryTitle").textContent = name;
+  document.querySelector("#selectedCategoryLabel").textContent = "รวมครุภัณฑ์ชื่อเดียวกัน";
+
+  const itemList = document.querySelector("#itemList");
+  itemList.replaceChildren();
+  const items = getAllAssetsWithSource().filter((item) => getAssetGroupName(item) === name);
+  currentListItems = items;
+
+  if (items.length === 0) {
+    itemList.innerHTML = `<div class="item-button"><strong>ยังไม่มีข้อมูลชื่อนี้</strong><span>ตรวจชื่อครุภัณฑ์อีกครั้ง</span></div>`;
+    renderDetail(null);
+  } else {
+    items.forEach((item, index) => {
+      const button = document.createElement("button");
+      button.className = "item-button";
+      button.type = "button";
+      button.innerHTML = `<strong>${escapeHtml(item.code || item.name || "-")}</strong><span>${escapeHtml(item._sourceCategory)} | ${escapeHtml(displayDate(item.acquiredDate))}</span>`;
       button.addEventListener("click", () => renderDetail(item, index));
       itemList.append(button);
     });
@@ -1018,6 +1077,9 @@ async function deleteCurrentAsset() {
   if (currentCategory.startsWith("__year:")) {
     renderYearGroups();
     renderItemsByYear(currentCategory.replace("__year:", ""));
+  } else if (currentCategory.startsWith("__name:")) {
+    renderNameGroups();
+    renderItemsByName(currentCategory.replace("__name:", ""));
   } else {
     renderItems(sourceCategory);
   }
@@ -1201,10 +1263,17 @@ document.querySelector("#showYearsButton")?.addEventListener("click", () => {
   renderYearGroups();
   showView("year");
 });
+document.querySelector("#showNamesButton")?.addEventListener("click", () => {
+  renderNameGroups();
+  showView("name");
+});
 document.querySelector("#backToCategoriesButton").addEventListener("click", () => {
   if (currentCategory.startsWith("__year:")) {
     renderYearGroups();
     showView("year");
+  } else if (currentCategory.startsWith("__name:")) {
+    renderNameGroups();
+    showView("name");
   } else {
     showView("category");
   }
