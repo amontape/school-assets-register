@@ -601,7 +601,7 @@ function calculateDepreciation(item) {
   const annual = totalValue * rate / 100;
   const schedule = [];
 
-  if (totalValue < 5000 || totalValue <= 1 || item.depreciation === "no") {
+  if (totalValue <= 1 || item.depreciation === "no") {
     return { totalValue, life, rate, annual, schedule };
   }
 
@@ -630,10 +630,6 @@ function calculateDepreciation(item) {
 
 function renderDepreciation(item) {
   const result = calculateDepreciation(item);
-  if (result.totalValue < 5000) {
-    return "<p>รายการนี้มูลค่าต่ำกว่า 5,000 บาท จึงไม่ต้องคำนวณค่าเสื่อมตามแบบฟอร์มตัวอย่าง</p>";
-  }
-
   if (item.depreciation === "no" || result.schedule.length === 0) {
     return "<p>รายการนี้เลือกไม่คำนวณค่าเสื่อม</p>";
   }
