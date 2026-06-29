@@ -217,6 +217,7 @@ let lastSavedItemName = "";
 let uploadedImageData = "";
 let isCloudConnected = false;
 let editingAssetRef = null;
+let lifeEditedByUser = false;
 let currentViewName = "home";
 let isRestoringHistory = false;
 
@@ -604,7 +605,7 @@ function calculateDepreciation(item) {
   const totalValue = quantity * price;
   const acquiredDate = parseThaiDate(item.acquiredDate);
   const rule = getDepreciationRule(item.category || currentCategory, acquiredDate);
-  const life = rule.life || Math.max(1, parseNumber(item.life || "5"));
+  const life = Math.max(1, parseNumber(item.life || rule.life || "5"));
   const customRate = parseNumber(item.customRate);
   const rate = customRate > 0 ? customRate : (rule.rate || (100 / life));
   const annual = totalValue * rate / 100;
@@ -1166,6 +1167,7 @@ function clearFileInput(selector) {
 
 function startNewAsset() {
   editingAssetRef = null;
+  lifeEditedByUser = false;
   uploadedImageData = "";
   document.querySelector("#assetForm").reset();
   document.querySelector("#formQuantity").value = "1";
@@ -1182,6 +1184,7 @@ function startEditAsset(selectedItem) {
   }
   const { item, sourceCategory, sourceIndex } = sourceRef;
   editingAssetRef = { sourceCategory, sourceIndex, cloudId: item._cloudId || "" };
+  lifeEditedByUser = true;
   uploadedImageData = item.imageData || "";
   setFormValue("#formGovernment", FIXED_GOVERNMENT);
   setFormValue("#formOrganization", FIXED_ORGANIZATION);
@@ -1392,6 +1395,9 @@ renderCategories();
 startCloudSync();
 
 function updateFormLifeFromRule() {
+  if (lifeEditedByUser) {
+    return;
+  }
   const category = document.querySelector("#formCategory").value;
   const date = parseThaiDate(document.querySelector("#formDate").value);
   const rule = getDepreciationRule(category, date);
@@ -1400,4 +1406,7 @@ function updateFormLifeFromRule() {
 
 document.querySelector("#formCategory").addEventListener("change", updateFormLifeFromRule);
 document.querySelector("#formDate").addEventListener("change", updateFormLifeFromRule);
+document.querySelector("#formLife").addEventListener("input", () => {
+  lifeEditedByUser = true;
+});
 updateFormLifeFromRule();
