@@ -213,6 +213,7 @@ let lastSavedCategory = "";
 let lastSavedItemName = "";
 let uploadedImageData = "";
 let isCloudConnected = false;
+let editingAssetRef = null;
 let currentViewName = "home";
 let isRestoringHistory = false;
 
@@ -287,6 +288,22 @@ function emptyAssetGroups() {
 function removeLocalOnlyFields(item) {
   const { _cloudId, ...cloudItem } = item;
   return cloudItem;
+}
+
+function getCurrentSourceRef() {
+  const item = currentListItems[currentSelectedIndex];
+  if (!item) {
+    return null;
+  }
+  const sourceCategory = item._sourceCategory || currentCategory;
+  const sourceItems = assetData[sourceCategory] || [];
+  let sourceIndex = item._sourceIndex;
+  if (sourceIndex < 0 || sourceItems[sourceIndex]?._cloudId !== item._cloudId) {
+    sourceIndex = sourceItems.findIndex((sourceItem) => (
+      item._cloudId ? sourceItem._cloudId === item._cloudId : sourceItem.name === item.name && sourceItem.code === item.code
+    ));
+  }
+  return sourceIndex < 0 ? null : { item, sourceCategory, sourceIndex };
 }
 
 function compressImageFile(file) {
@@ -385,6 +402,17 @@ function displayDate(value) {
   const date = parseThaiDate(value);
   const monthNames = ["", "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
   return `${date.day} ${monthNames[date.month]} ${date.year}`;
+}
+
+function toDateInputValue(value) {
+  if (!value) {
+    return "";
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return value;
+  }
+  const date = parseThaiDate(value);
+  return date ? date.toISOString().slice(0, 10) : "";
 }
 
 function formatPrintMoney(value) {
@@ -712,6 +740,7 @@ function renderDetail(item, index = -1) {
     <div class="asset-photo">${renderAssetPhoto(item)}</div>
     <h3>${escapeHtml(item.name)}</h3>
     <div class="detail-actions">
+      <button class="primary-button" id="editAssetButton" type="button">แก้ไข</button>
       <button class="primary-button" id="printAssetButton" type="button">พิมพ์ทะเบียน</button>
       <button class="danger-button" id="deleteAssetButton" type="button">ลบครุภัณฑ์</button>
     </div>
@@ -738,6 +767,7 @@ function renderDetail(item, index = -1) {
     ${renderDepreciation(item)}
   `;
 
+  document.querySelector("#editAssetButton").addEventListener("click", startEditCurrentAsset);
   document.querySelector("#printAssetButton").addEventListener("click", () => printAsset(item));
   document.querySelector("#deleteAssetButton").addEventListener("click", deleteCurrentAsset);
 }
@@ -886,21 +916,12 @@ async function deleteCurrentAsset() {
     return;
   }
 
-  const item = currentListItems[currentSelectedIndex];
-  if (!item) {
+  const sourceRef = getCurrentSourceRef();
+  if (!sourceRef) {
     return;
   }
-  const sourceCategory = item._sourceCategory || currentCategory;
+  const { item, sourceCategory, sourceIndex } = sourceRef;
   const sourceItems = assetData[sourceCategory] || [];
-  let sourceIndex = item._sourceIndex;
-  if (sourceIndex < 0 || sourceItems[sourceIndex]?._cloudId !== item._cloudId) {
-    sourceIndex = sourceItems.findIndex((sourceItem) => (
-      item._cloudId ? sourceItem._cloudId === item._cloudId : sourceItem.name === item.name && sourceItem.code === item.code
-    ));
-  }
-  if (sourceIndex < 0) {
-    return;
-  }
 
   const ok = confirm(`ต้องการลบ "${item.name}" ใช่ไหม`);
   if (!ok) {
@@ -924,6 +945,53 @@ async function deleteCurrentAsset() {
   } else {
     renderItems(sourceCategory);
   }
+}
+
+function setFormValue(selector, value) {
+  const field = document.querySelector(selector);
+  if (field) {
+    field.value = value || "";
+  }
+}
+
+function startNewAsset() {
+  editingAssetRef = null;
+  uploadedImageData = "";
+  document.querySelector("#assetForm").reset();
+  document.querySelector("#formQuantity").value = "1";
+  updateFormLifeFromRule();
+  showView("form");
+}
+
+function startEditCurrentAsset() {
+  const sourceRef = getCurrentSourceRef();
+  if (!sourceRef) {
+    return;
+  }
+  const { item, sourceCategory, sourceIndex } = sourceRef;
+  editingAssetRef = { sourceCategory, sourceIndex, cloudId: item._cloudId || "" };
+  uploadedImageData = item.imageData || "";
+  setFormValue("#formGovernment", item.government);
+  setFormValue("#formOrganization", item.organization);
+  setFormValue("#formSeller", item.seller);
+  setFormValue("#formCategory", item.category || sourceCategory);
+  setFormValue("#formName", item.name);
+  setFormValue("#formCode", item.code);
+  setFormValue("#formFeature", item.feature);
+  setFormValue("#formModel", item.model);
+  setFormValue("#formLocation", item.location);
+  setFormValue("#formOwner", item.owner);
+  setFormValue("#formQuantity", item.quantity || "1");
+  setFormValue("#formPrice", item.price);
+  setFormValue("#formLife", item.life);
+  setFormValue("#formDate", toDateInputValue(item.acquiredDate));
+  setFormValue("#formDepreciation", item.depreciation || "yes");
+  setFormValue("#formBudget", item.budget);
+  setFormValue("#formMethod", item.method);
+  setFormValue("#formImage", item.image);
+  setFormValue("#formNote", item.note);
+  document.querySelector("#formImageFile").value = "";
+  showView("form");
 }
 
 async function saveAsset(event) {
@@ -952,6 +1020,51 @@ async function saveAsset(event) {
     imageData: uploadedImageData,
     note: document.querySelector("#formNote").value
   };
+
+  if (editingAssetRef) {
+    const oldCategory = editingAssetRef.sourceCategory;
+    const oldItems = assetData[oldCategory] || [];
+    const oldItem = oldItems[editingAssetRef.sourceIndex] || {};
+    const updatedItem = {
+      ...oldItem,
+      ...item,
+      _cloudId: editingAssetRef.cloudId || oldItem._cloudId || "",
+      imageData: uploadedImageData || oldItem.imageData || ""
+    };
+
+    if (!assetData[category]) {
+      assetData[category] = [];
+    }
+    if (oldCategory === category) {
+      oldItems[editingAssetRef.sourceIndex] = updatedItem;
+    } else {
+      oldItems.splice(editingAssetRef.sourceIndex, 1);
+      assetData[category].push(updatedItem);
+    }
+    saveAssetData();
+    if (updatedItem._cloudId) {
+      try {
+        await assetsCollection.doc(updatedItem._cloudId).update({
+          ...removeLocalOnlyFields(updatedItem),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        updateSyncStatus("อัปเดตข้อมูลในฐานข้อมูลกลางแล้ว");
+      } catch (error) {
+        console.error("Cannot update cloud asset", error);
+        updateSyncStatus("อัปเดตฐานข้อมูลกลางไม่สำเร็จ เก็บสำรองไว้ในเครื่องนี้", true);
+      }
+    }
+    lastSavedCategory = category;
+    lastSavedItemName = updatedItem.name;
+    editingAssetRef = null;
+    event.target.reset();
+    document.querySelector("#formQuantity").value = "1";
+    document.querySelector("#formImageFile").value = "";
+    uploadedImageData = "";
+    renderCategories();
+    showView("success");
+    return;
+  }
 
   if (!assetData[category]) {
     assetData[category] = [];
@@ -986,7 +1099,7 @@ async function saveAsset(event) {
 
 document.querySelector("#homeButton").addEventListener("click", () => showView("home"));
 document.querySelector("#showCategoriesButton").addEventListener("click", () => showView("category"));
-document.querySelector("#showFormButton").addEventListener("click", () => showView("form"));
+document.querySelector("#showFormButton").addEventListener("click", startNewAsset);
 document.querySelector("#showYearsButton").addEventListener("click", () => {
   renderYearGroups();
   showView("year");
@@ -1002,6 +1115,7 @@ document.querySelector("#backToCategoriesButton").addEventListener("click", () =
 document.querySelector("#assetForm").addEventListener("submit", saveAsset);
 document.querySelector("#assetForm").addEventListener("reset", () => {
   uploadedImageData = "";
+  editingAssetRef = null;
 });
 document.querySelector("#viewSavedItemButton").addEventListener("click", () => {
   renderItems(lastSavedCategory || categories[0], lastSavedItemName);
