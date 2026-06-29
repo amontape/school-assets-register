@@ -828,6 +828,35 @@ function renderItemsByName(name, selectedItemName = "") {
   showView("items");
 }
 
+function renderDisposedItems(selectedItemName = "") {
+  currentCategory = "__disposed";
+  document.querySelector("#selectedCategoryTitle").textContent = "ครุภัณฑ์ที่จำหน่ายแล้ว";
+  document.querySelector("#selectedCategoryLabel").textContent = "รายการจำหน่ายแล้วที่ยังเก็บข้อมูลไว้";
+
+  const itemList = document.querySelector("#itemList");
+  itemList.replaceChildren();
+  const items = getAllAssetsWithSource().filter((item) => item.disposed === "yes");
+  currentListItems = items;
+
+  if (items.length === 0) {
+    itemList.innerHTML = `<div class="item-button"><strong>ยังไม่มีรายการจำหน่ายแล้ว</strong><span>กดทำเครื่องหมายจำหน่ายจากหน้ารายละเอียดครุภัณฑ์</span></div>`;
+    renderDetail(null);
+  } else {
+    items.forEach((item, index) => {
+      const button = document.createElement("button");
+      button.className = "item-button";
+      button.type = "button";
+      button.innerHTML = `<strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item.code || "-")} | ${escapeHtml(item._sourceCategory)}</span>`;
+      button.addEventListener("click", () => renderDetail(item, index));
+      itemList.append(button);
+    });
+    const selectedItem = items.find((item) => item.name === selectedItemName) || items[0];
+    renderDetail(selectedItem, items.indexOf(selectedItem));
+  }
+
+  showView("items");
+}
+
 function renderItemsByYear(year, selectedItemName = "") {
   currentCategory = `__year:${year}`;
   document.querySelector("#selectedCategoryTitle").textContent = `ครุภัณฑ์ปีงบประมาณ ${year}`;
@@ -877,12 +906,14 @@ function renderDetail(item, index = -1) {
     <div class="detail-actions">
       <button class="primary-button" id="editAssetButton" type="button">แก้ไข</button>
       <button class="primary-button" id="printAssetButton" type="button">พิมพ์ทะเบียน</button>
+      <button class="light-button" id="disposeAssetButton" type="button">${item.disposed === "yes" ? "ยกเลิกจำหน่าย" : "จำหน่ายแล้ว"}</button>
       <button class="danger-button" id="deleteAssetButton" type="button">ลบครุภัณฑ์</button>
     </div>
     <table class="detail-table">
       <tr><th>ส่วนราชการ</th><td>${escapeHtml(item.government || "-")}</td></tr>
       <tr><th>หน่วยงาน</th><td>${escapeHtml(item.organization || "-")}</td></tr>
       <tr><th>รหัสครุภัณฑ์</th><td>${escapeHtml(item.code || "-")}</td></tr>
+      <tr><th>สถานะจำหน่าย</th><td>${item.disposed === "yes" ? "จำหน่ายแล้ว" : "ยังใช้งานอยู่"}</td></tr>
       <tr><th>ลำดับชื่อซ้ำ</th><td>${escapeHtml(item.nameRunningNo ? `ตัวที่ ${item.nameRunningNo}` : "-")}</td></tr>
       <tr><th>ลักษณะ/สมบัติ</th><td>${escapeHtml(item.feature || "-")}</td></tr>
       <tr><th>รุ่นแบบ</th><td>${escapeHtml(item.model || "-")}</td></tr>
@@ -905,6 +936,7 @@ function renderDetail(item, index = -1) {
 
   document.querySelector("#editAssetButton").addEventListener("click", () => startEditAsset(item));
   document.querySelector("#printAssetButton").addEventListener("click", () => printAsset(item));
+  document.querySelector("#disposeAssetButton").addEventListener("click", toggleCurrentAssetDisposed);
   document.querySelector("#deleteAssetButton").addEventListener("click", deleteCurrentAsset);
 }
 
@@ -1083,6 +1115,34 @@ async function deleteCurrentAsset() {
     renderItemsByName(currentCategory.replace("__name:", ""));
   } else {
     renderItems(sourceCategory);
+  }
+}
+
+async function toggleCurrentAssetDisposed() {
+  const sourceRef = getCurrentSourceRef();
+  if (!sourceRef) {
+    return;
+  }
+  const { item, sourceCategory, sourceIndex } = sourceRef;
+  const sourceItems = assetData[sourceCategory] || [];
+  const nextValue = item.disposed === "yes" ? "no" : "yes";
+  sourceItems[sourceIndex] = { ...sourceItems[sourceIndex], disposed: nextValue };
+  saveAssetData();
+  if (item._cloudId) {
+    try {
+      await assetsCollection.doc(item._cloudId).update({
+        disposed: nextValue,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch (error) {
+      console.error("Cannot update disposed status", error);
+      updateSyncStatus("อัปเดตสถานะจำหน่ายไม่สำเร็จ เก็บสำรองไว้ในเครื่องนี้", true);
+    }
+  }
+  if (currentCategory === "__disposed") {
+    renderDisposedItems(item.name);
+  } else {
+    renderDetail({ ...item, disposed: nextValue }, currentSelectedIndex);
   }
 }
 
@@ -1268,6 +1328,7 @@ document.querySelector("#showNamesButton")?.addEventListener("click", () => {
   renderNameGroups();
   showView("name");
 });
+document.querySelector("#showDisposedButton")?.addEventListener("click", () => renderDisposedItems());
 document.querySelector("#backToCategoriesButton").addEventListener("click", () => {
   if (currentCategory.startsWith("__year:")) {
     renderYearGroups();
@@ -1275,6 +1336,8 @@ document.querySelector("#backToCategoriesButton").addEventListener("click", () =
   } else if (currentCategory.startsWith("__name:")) {
     renderNameGroups();
     showView("name");
+  } else if (currentCategory === "__disposed") {
+    showView("home");
   } else {
     showView("category");
   }
