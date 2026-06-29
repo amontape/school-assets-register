@@ -692,13 +692,11 @@ function renderCategories() {
 }
 
 function getAssetYear(item) {
-  const text = [item.acquiredDate, item.code, item.name].filter(Boolean).join(" ");
-  const fullYear = text.match(/(?:25|26)\d{2}/);
-  if (fullYear) {
-    return fullYear[0];
+  if (!item.acquiredDate) {
+    return "";
   }
-  const shortYear = text.match(/(?:\/|-)(\d{2})(?!\d)/);
-  return shortYear ? `25${shortYear[1]}` : "";
+  const date = parseThaiDate(item.acquiredDate);
+  return String(date.month >= 10 ? date.year + 1 : date.year);
 }
 
 function getAllAssetsWithSource() {
@@ -722,7 +720,7 @@ function renderYearGroups() {
     const button = document.createElement("button");
     button.className = "category-card";
     button.type = "button";
-    button.innerHTML = `<strong>พ.ศ. ${escapeHtml(year)}</strong><span>${count} รายการ</span>`;
+    button.innerHTML = `<strong>ปีงบประมาณ ${escapeHtml(year)}</strong><span>${count} รายการ</span>`;
     button.addEventListener("click", () => renderItemsByYear(year));
     yearGrid.append(button);
   });
@@ -770,8 +768,8 @@ function renderItems(category, selectedItemName = "") {
 
 function renderItemsByYear(year, selectedItemName = "") {
   currentCategory = `__year:${year}`;
-  document.querySelector("#selectedCategoryTitle").textContent = `ครุภัณฑ์ พ.ศ. ${year}`;
-  document.querySelector("#selectedCategoryLabel").textContent = "รวมครุภัณฑ์ของปีเดียวกัน";
+  document.querySelector("#selectedCategoryTitle").textContent = `ครุภัณฑ์ปีงบประมาณ ${year}`;
+  document.querySelector("#selectedCategoryLabel").textContent = "รวมครุภัณฑ์ตามวันที่ได้มา";
 
   const itemList = document.querySelector("#itemList");
   itemList.replaceChildren();
