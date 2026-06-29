@@ -409,10 +409,10 @@ function toDateInputValue(value) {
     return "";
   }
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return value;
+    return displayDate(value);
   }
   const date = parseThaiDate(value);
-  return date ? date.toISOString().slice(0, 10) : "";
+  return date ? `${date.day}/${date.month}/${date.year}` : "";
 }
 
 function normalizeAssetCode(value) {
@@ -513,12 +513,18 @@ function parseThaiDate(value) {
     };
   }
 
-  const slash = text.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+  const slash = text.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
   if (slash) {
+    let year = Number(slash[3]);
+    if (year < 100) {
+      year += 2500;
+    } else if (year < 2400) {
+      year += 543;
+    }
     return {
       day: Number(slash[1]),
       month: Number(slash[2]),
-      year: Number(slash[3])
+      year
     };
   }
 
