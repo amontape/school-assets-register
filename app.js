@@ -1070,6 +1070,7 @@ function startEditAsset(selectedItem) {
   setFormValue("#formImage", item.image);
   setFormValue("#formNote", item.note);
   document.querySelector("#formImageFile").value = "";
+  document.querySelector("#formCameraFile").value = "";
   updateNameCountHint();
   showView("form");
 }
@@ -1142,6 +1143,7 @@ async function saveAsset(event) {
     event.target.reset();
     document.querySelector("#formQuantity").value = "1";
     document.querySelector("#formImageFile").value = "";
+    document.querySelector("#formCameraFile").value = "";
     uploadedImageData = "";
     renderCategories();
     showView("success");
@@ -1174,6 +1176,7 @@ async function saveAsset(event) {
   document.querySelector("#formQuantity").value = "1";
   updateFormLifeFromRule();
   document.querySelector("#formImageFile").value = "";
+  document.querySelector("#formCameraFile").value = "";
   uploadedImageData = "";
   renderCategories();
   showView("success");
@@ -1203,7 +1206,7 @@ document.querySelector("#viewSavedItemButton").addEventListener("click", () => {
   renderItems(lastSavedCategory || categories[0], lastSavedItemName);
 });
 
-document.querySelector("#formImageFile").addEventListener("change", async (event) => {
+async function handleImagePick(event) {
   const file = event.target.files?.[0];
   uploadedImageData = "";
   if (!file) {
@@ -1223,7 +1226,10 @@ document.querySelector("#formImageFile").addEventListener("change", async (event
     console.error("Cannot read image", error);
     alert("อ่านรูปไม่สำเร็จ ลองเลือกรูปใหม่อีกครั้ง");
   }
-});
+}
+
+document.querySelector("#formImageFile").addEventListener("change", handleImagePick);
+document.querySelector("#formCameraFile").addEventListener("change", handleImagePick);
 document.querySelector("#formName").addEventListener("input", updateNameCountHint);
 document.querySelector("#formCode").addEventListener("blur", (event) => {
   event.target.value = normalizeAssetCode(event.target.value);
