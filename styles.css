@@ -362,14 +362,27 @@ main {
   border-radius: 6px;
   color: var(--muted);
   display: flex;
-  height: 230px;
+  min-height: 230px;
   justify-content: center;
   margin-bottom: 18px;
   overflow: hidden;
 }
 
-.asset-photo img {
+.asset-gallery {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   height: 100%;
+  padding: 8px;
+  width: 100%;
+}
+
+.asset-photo img {
+  background: #fff;
+  border: 1px solid #d8e1ea;
+  border-radius: 6px;
+  height: 100%;
+  min-height: 120px;
   object-fit: contain;
   width: 100%;
 }

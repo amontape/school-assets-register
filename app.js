@@ -215,6 +215,7 @@ let currentListItems = [];
 let lastSavedCategory = "";
 let lastSavedItemName = "";
 let uploadedImageData = "";
+let uploadedImageDataList = [];
 let isCloudConnected = false;
 let editingAssetRef = null;
 let lifeEditedByUser = false;
@@ -337,6 +338,14 @@ function compressImageFile(file) {
     });
     reader.readAsDataURL(file);
   });
+}
+
+function getAssetImages(item) {
+  const images = Array.isArray(item.imageDataList) ? item.imageDataList.filter(Boolean) : [];
+  if (item.imageData && !images.includes(item.imageData)) {
+    images.unshift(item.imageData);
+  }
+  return images;
 }
 
 function startCloudSync() {
@@ -677,8 +686,9 @@ function renderDepreciation(item) {
 }
 
 function renderAssetPhoto(item) {
-  if (item.imageData) {
-    return `<img src="${item.imageData}" alt="${escapeHtml(item.name || "รูปครุภัณฑ์")}">`;
+  const images = getAssetImages(item);
+  if (images.length > 0) {
+    return `<div class="asset-gallery">${images.map((image, index) => `<img src="${image}" alt="${escapeHtml(`${item.name || "รูปครุภัณฑ์"} ${index + 1}`)}">`).join("")}</div>`;
   }
 
   return `<span>${escapeHtml(item.image || "รูปครุภัณฑ์")}</span>`;
@@ -1170,6 +1180,7 @@ function startNewAsset() {
   editingAssetRef = null;
   lifeEditedByUser = false;
   uploadedImageData = "";
+  uploadedImageDataList = [];
   document.querySelector("#assetForm").reset();
   document.querySelector("#formQuantity").value = "1";
   updateFormLifeFromRule();
@@ -1186,7 +1197,8 @@ function startEditAsset(selectedItem) {
   const { item, sourceCategory, sourceIndex } = sourceRef;
   editingAssetRef = { sourceCategory, sourceIndex, cloudId: item._cloudId || "" };
   lifeEditedByUser = true;
-  uploadedImageData = item.imageData || "";
+  uploadedImageDataList = getAssetImages(item);
+  uploadedImageData = uploadedImageDataList[0] || "";
   setFormValue("#formGovernment", FIXED_GOVERNMENT);
   setFormValue("#formOrganization", FIXED_ORGANIZATION);
   setFormValue("#formSeller", item.seller);
@@ -1238,6 +1250,7 @@ async function saveAsset(event) {
     method: document.querySelector("#formMethod").value,
     image: document.querySelector("#formImage").value || "ยังไม่ได้เพิ่มรูป",
     imageData: uploadedImageData,
+    imageDataList: uploadedImageDataList,
     nameRunningNo: countSameAssetName(document.querySelector("#formName").value, editingAssetRef) + 1,
     note: document.querySelector("#formNote").value
   };
@@ -1250,7 +1263,8 @@ async function saveAsset(event) {
       ...oldItem,
       ...item,
       _cloudId: editingAssetRef.cloudId || oldItem._cloudId || "",
-      imageData: uploadedImageData || oldItem.imageData || ""
+      imageData: uploadedImageData || oldItem.imageData || "",
+      imageDataList: uploadedImageDataList.length > 0 ? uploadedImageDataList : getAssetImages(oldItem)
     };
 
     if (!assetData[category]) {
@@ -1283,6 +1297,7 @@ async function saveAsset(event) {
     clearFileInput("#formImageFile");
     clearFileInput("#formCameraFile");
     uploadedImageData = "";
+    uploadedImageDataList = [];
     renderCategories();
     renderItems(category, updatedItem.name);
     return;
@@ -1316,6 +1331,7 @@ async function saveAsset(event) {
   clearFileInput("#formImageFile");
   clearFileInput("#formCameraFile");
   uploadedImageData = "";
+  uploadedImageDataList = [];
   renderCategories();
   renderItems(category, item.name);
 }
@@ -1356,20 +1372,21 @@ document.querySelector("#viewSavedItemButton").addEventListener("click", () => {
 });
 
 async function handleImagePick(event) {
-  const file = event.target.files?.[0];
-  uploadedImageData = "";
-  if (!file) {
+  const files = Array.from(event.target.files || []);
+  if (files.length === 0) {
     return;
   }
 
-  if (file.size > 1200000) {
+  if (files.some((file) => file.size > 1200000)) {
     alert("รูปนี้มีขนาดค่อนข้างใหญ่ อาจบันทึกในเครื่องไม่สำเร็จ แนะนำใช้รูปขนาดไม่เกินประมาณ 1 MB");
   }
 
   try {
-    uploadedImageData = await compressImageFile(file);
+    const compressedImages = await Promise.all(files.map((file) => compressImageFile(file)));
+    uploadedImageDataList = [...uploadedImageDataList, ...compressedImages];
+    uploadedImageData = uploadedImageDataList[0] || "";
     if (!document.querySelector("#formImage").value) {
-      document.querySelector("#formImage").value = file.name;
+      document.querySelector("#formImage").value = files.map((file) => file.name).join(", ");
     }
   } catch (error) {
     console.error("Cannot read image", error);
