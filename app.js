@@ -1183,6 +1183,7 @@ async function saveAsset(event) {
 }
 
 document.querySelector("#homeButton").addEventListener("click", () => showView("home"));
+document.querySelector("#quickAddButton").addEventListener("click", startNewAsset);
 document.querySelector("#showCategoriesButton").addEventListener("click", () => showView("category"));
 document.querySelector("#showFormButton").addEventListener("click", startNewAsset);
 document.querySelector("#showYearsButton").addEventListener("click", () => {
