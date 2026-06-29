@@ -2,6 +2,7 @@ const STORAGE_KEY = "schoolAssetRegisterData";
 const ASSETS_COLLECTION = "assets";
 const FIXED_GOVERNMENT = "สพม.พระนครศรีอยุธยา";
 const FIXED_ORGANIZATION = "โรงเรียนบางไทรวิทยา";
+const thaiSorter = new Intl.Collator("th", { numeric: true, sensitivity: "base" });
 
 const firebaseConfig = {
   apiKey: "AIzaSyBGE94WK8S7ZEP2XsdjcWQ5s5kAeK5mrxM",
@@ -748,7 +749,7 @@ function renderNameGroups() {
     return result;
   }, {});
 
-  Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0], "th")).forEach(([name, count]) => {
+  Object.entries(groups).sort((a, b) => thaiSorter.compare(a[0], b[0])).forEach(([name, count]) => {
     const button = document.createElement("button");
     button.className = "category-card";
     button.type = "button";
