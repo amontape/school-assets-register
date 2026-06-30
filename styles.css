@@ -509,6 +509,46 @@ textarea {
   margin-top: 2px;
 }
 
+.image-manager {
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.image-manager-title {
+  color: var(--blue-dark);
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.image-manager-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+}
+
+.image-manager-item {
+  background: #fff;
+  border: 1px solid #d8e1ea;
+  border-radius: 6px;
+  display: grid;
+  gap: 8px;
+  padding: 8px;
+}
+
+.image-manager-item img {
+  aspect-ratio: 4 / 3;
+  border-radius: 4px;
+  object-fit: cover;
+  width: 100%;
+}
+
+.image-manager-item button {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 input:focus,
 select:focus,
 textarea:focus {

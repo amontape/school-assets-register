@@ -218,6 +218,7 @@ let uploadedImageData = "";
 let uploadedImageDataList = [];
 let isCloudConnected = false;
 let editingAssetRef = null;
+let editingReturnCategory = "";
 let lifeEditedByUser = false;
 let currentViewName = "home";
 let isRestoringHistory = false;
@@ -227,6 +228,7 @@ const views = {
   category: document.querySelector("#categoryView"),
   year: document.querySelector("#yearView"),
   name: document.querySelector("#nameView"),
+  owner: document.querySelector("#ownerView"),
   items: document.querySelector("#itemsView"),
   form: document.querySelector("#formView"),
   success: document.querySelector("#successView")
@@ -357,6 +359,46 @@ function renderAssetName(item, fallback = "-") {
   return `${name}${hasAssetPhoto(item) ? '<span class="photo-badge">มีรูป</span>' : ""}`;
 }
 
+function getAssetOwnerGroup(item) {
+  return String(item.owner || "").trim() || "ไม่ระบุผู้รับผิดชอบ";
+}
+
+function renderUploadedImageManager() {
+  const manager = document.querySelector("#imageManager");
+  if (!manager) {
+    return;
+  }
+  if (uploadedImageDataList.length === 0) {
+    manager.innerHTML = '<p class="form-hint">ยังไม่มีรูปที่เลือก</p>';
+    return;
+  }
+  manager.innerHTML = `
+    <div class="image-manager-title">รูปที่เลือกไว้</div>
+    <div class="image-manager-grid">
+      ${uploadedImageDataList.map((image, index) => `
+        <div class="image-manager-item">
+          <img src="${image}" alt="รูปครุภัณฑ์ ${index + 1}">
+          <button type="button" data-remove-image="${index}">ลบรูปนี้</button>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function renderReturnContext(context, item) {
+  if (context?.startsWith("__year:")) {
+    renderItemsByYear(context.replace("__year:", ""), item.name);
+  } else if (context?.startsWith("__name:")) {
+    renderItemsByName(context.replace("__name:", ""), item.name);
+  } else if (context?.startsWith("__owner:")) {
+    renderItemsByOwner(context.replace("__owner:", ""), item.name);
+  } else if (context === "__disposed") {
+    renderDisposedItems(item.name);
+  } else {
+    renderItems(item.category || context || categories[0], item.name);
+  }
+}
+
 function startCloudSync() {
   assetsCollection.onSnapshot((snapshot) => {
     const cloudData = emptyAssetGroups();
@@ -380,6 +422,10 @@ function startCloudSync() {
       renderItemsByYear(currentCategory.replace("__year:", ""), lastSavedItemName);
     } else if (currentCategory?.startsWith("__name:")) {
       renderItemsByName(currentCategory.replace("__name:", ""), lastSavedItemName);
+    } else if (currentCategory?.startsWith("__owner:")) {
+      renderItemsByOwner(currentCategory.replace("__owner:", ""), lastSavedItemName);
+    } else if (currentCategory === "__disposed") {
+      renderDisposedItems(lastSavedItemName);
     } else if (currentCategory) {
       renderItems(currentCategory, lastSavedItemName);
     }
@@ -784,6 +830,29 @@ function renderNameGroups() {
   }
 }
 
+function renderOwnerGroups() {
+  const ownerGrid = document.querySelector("#ownerGrid");
+  ownerGrid.replaceChildren();
+  const groups = getAllAssetsWithSource().reduce((result, item) => {
+    const owner = getAssetOwnerGroup(item);
+    result[owner] = (result[owner] || 0) + 1;
+    return result;
+  }, {});
+
+  Object.entries(groups).sort((a, b) => thaiSorter.compare(a[0], b[0])).forEach(([owner, count]) => {
+    const button = document.createElement("button");
+    button.className = "category-card";
+    button.type = "button";
+    button.innerHTML = `<strong>${escapeHtml(owner)}</strong><span>${count} รายการ</span>`;
+    button.addEventListener("click", () => renderItemsByOwner(owner));
+    ownerGrid.append(button);
+  });
+
+  if (Object.keys(groups).length === 0) {
+    ownerGrid.innerHTML = `<div class="item-button"><strong>ยังไม่มีข้อมูล</strong><span>เพิ่มผู้รับผิดชอบในฟอร์มก่อน แล้วระบบจะจัดกลุ่มให้</span></div>`;
+  }
+}
+
 function renderItems(category, selectedItemName = "") {
   currentCategory = category;
   document.querySelector("#selectedCategoryTitle").textContent = category;
@@ -839,6 +908,35 @@ function renderItemsByName(name, selectedItemName = "") {
       button.className = "item-button";
       button.type = "button";
       button.innerHTML = `<strong>${escapeHtml(item.code || item.name || "-")}${hasAssetPhoto(item) ? '<span class="photo-badge">มีรูป</span>' : ""}</strong><span>${escapeHtml(item._sourceCategory)} | ${escapeHtml(displayDate(item.acquiredDate))}</span>`;
+      button.addEventListener("click", () => renderDetail(item, index));
+      itemList.append(button);
+    });
+    const selectedItem = items.find((item) => item.name === selectedItemName) || items[0];
+    renderDetail(selectedItem, items.indexOf(selectedItem));
+  }
+
+  showView("items");
+}
+
+function renderItemsByOwner(owner, selectedItemName = "") {
+  currentCategory = `__owner:${owner}`;
+  document.querySelector("#selectedCategoryTitle").textContent = owner;
+  document.querySelector("#selectedCategoryLabel").textContent = "รวมครุภัณฑ์ตามผู้รับผิดชอบ";
+
+  const itemList = document.querySelector("#itemList");
+  itemList.replaceChildren();
+  const items = getAllAssetsWithSource().filter((item) => getAssetOwnerGroup(item) === owner);
+  currentListItems = items;
+
+  if (items.length === 0) {
+    itemList.innerHTML = `<div class="item-button"><strong>ยังไม่มีข้อมูลผู้รับผิดชอบนี้</strong><span>ตรวจช่องผู้รับผิดชอบอีกครั้ง</span></div>`;
+    renderDetail(null);
+  } else {
+    items.forEach((item, index) => {
+      const button = document.createElement("button");
+      button.className = "item-button";
+      button.type = "button";
+      button.innerHTML = `<strong>${renderAssetName(item)}</strong><span>${escapeHtml(item.code || "-")} | ${escapeHtml(item._sourceCategory)}</span>`;
       button.addEventListener("click", () => renderDetail(item, index));
       itemList.append(button);
     });
@@ -1134,6 +1232,9 @@ async function deleteCurrentAsset() {
   } else if (currentCategory.startsWith("__name:")) {
     renderNameGroups();
     renderItemsByName(currentCategory.replace("__name:", ""));
+  } else if (currentCategory.startsWith("__owner:")) {
+    renderOwnerGroups();
+    renderItemsByOwner(currentCategory.replace("__owner:", ""));
   } else {
     renderItems(sourceCategory);
   }
@@ -1187,6 +1288,7 @@ function clearFileInput(selector) {
 
 function startNewAsset() {
   editingAssetRef = null;
+  editingReturnCategory = "";
   lifeEditedByUser = false;
   uploadedImageData = "";
   uploadedImageDataList = [];
@@ -1194,6 +1296,7 @@ function startNewAsset() {
   document.querySelector("#formQuantity").value = "1";
   updateFormLifeFromRule();
   updateNameCountHint();
+  renderUploadedImageManager();
   showView("form");
 }
 
@@ -1205,6 +1308,7 @@ function startEditAsset(selectedItem) {
   }
   const { item, sourceCategory, sourceIndex } = sourceRef;
   editingAssetRef = { sourceCategory, sourceIndex, cloudId: item._cloudId || "" };
+  editingReturnCategory = currentCategory;
   lifeEditedByUser = true;
   uploadedImageDataList = getAssetImages(item);
   uploadedImageData = uploadedImageDataList[0] || "";
@@ -1231,6 +1335,7 @@ function startEditAsset(selectedItem) {
   clearFileInput("#formImageFile");
   clearFileInput("#formCameraFile");
   updateNameCountHint();
+  renderUploadedImageManager();
   showView("form");
 }
 
@@ -1272,8 +1377,8 @@ async function saveAsset(event) {
       ...oldItem,
       ...item,
       _cloudId: editingAssetRef.cloudId || oldItem._cloudId || "",
-      imageData: uploadedImageData || oldItem.imageData || "",
-      imageDataList: uploadedImageDataList.length > 0 ? uploadedImageDataList : getAssetImages(oldItem)
+      imageData: uploadedImageDataList[0] || "",
+      imageDataList: uploadedImageDataList
     };
 
     if (!assetData[category]) {
@@ -1300,7 +1405,9 @@ async function saveAsset(event) {
     }
     lastSavedCategory = category;
     lastSavedItemName = updatedItem.name;
+    const returnCategory = editingReturnCategory;
     editingAssetRef = null;
+    editingReturnCategory = "";
     event.target.reset();
     document.querySelector("#formQuantity").value = "1";
     clearFileInput("#formImageFile");
@@ -1308,7 +1415,8 @@ async function saveAsset(event) {
     uploadedImageData = "";
     uploadedImageDataList = [];
     renderCategories();
-    renderItems(category, updatedItem.name);
+    renderUploadedImageManager();
+    renderReturnContext(returnCategory, updatedItem);
     return;
   }
 
@@ -1342,6 +1450,7 @@ async function saveAsset(event) {
   uploadedImageData = "";
   uploadedImageDataList = [];
   renderCategories();
+  renderUploadedImageManager();
   renderItems(category, item.name);
 }
 
@@ -1357,6 +1466,10 @@ document.querySelector("#showNamesButton")?.addEventListener("click", () => {
   renderNameGroups();
   showView("name");
 });
+document.querySelector("#showOwnersButton")?.addEventListener("click", () => {
+  renderOwnerGroups();
+  showView("owner");
+});
 document.querySelector("#showDisposedButton")?.addEventListener("click", () => renderDisposedItems());
 document.querySelector("#backToCategoriesButton").addEventListener("click", () => {
   if (currentCategory.startsWith("__year:")) {
@@ -1365,6 +1478,9 @@ document.querySelector("#backToCategoriesButton").addEventListener("click", () =
   } else if (currentCategory.startsWith("__name:")) {
     renderNameGroups();
     showView("name");
+  } else if (currentCategory.startsWith("__owner:")) {
+    renderOwnerGroups();
+    showView("owner");
   } else if (currentCategory === "__disposed") {
     showView("home");
   } else {
@@ -1374,7 +1490,10 @@ document.querySelector("#backToCategoriesButton").addEventListener("click", () =
 document.querySelector("#assetForm").addEventListener("submit", saveAsset);
 document.querySelector("#assetForm").addEventListener("reset", () => {
   uploadedImageData = "";
+  uploadedImageDataList = [];
   editingAssetRef = null;
+  editingReturnCategory = "";
+  renderUploadedImageManager();
 });
 document.querySelector("#viewSavedItemButton").addEventListener("click", () => {
   renderItems(lastSavedCategory || categories[0], lastSavedItemName);
@@ -1397,6 +1516,7 @@ async function handleImagePick(event) {
     if (!document.querySelector("#formImage").value) {
       document.querySelector("#formImage").value = files.map((file) => file.name).join(", ");
     }
+    renderUploadedImageManager();
   } catch (error) {
     console.error("Cannot read image", error);
     alert("อ่านรูปไม่สำเร็จ ลองเลือกรูปใหม่อีกครั้ง");
@@ -1405,6 +1525,16 @@ async function handleImagePick(event) {
 
 document.querySelector("#formImageFile")?.addEventListener("change", handleImagePick);
 document.querySelector("#formCameraFile")?.addEventListener("change", handleImagePick);
+document.querySelector("#imageManager")?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-remove-image]");
+  if (!button) {
+    return;
+  }
+  const index = Number(button.dataset.removeImage);
+  uploadedImageDataList.splice(index, 1);
+  uploadedImageData = uploadedImageDataList[0] || "";
+  renderUploadedImageManager();
+});
 document.querySelector("#formName").addEventListener("input", updateNameCountHint);
 document.querySelector("#formCode").addEventListener("blur", (event) => {
   event.target.value = normalizeAssetCode(event.target.value);

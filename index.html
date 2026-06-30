@@ -65,6 +65,13 @@
             <p>รวมรายการที่ทำเครื่องหมายว่าจำหน่ายแล้ว โดยไม่ลบข้อมูลจริงออกจากระบบ</p>
             <button id="showDisposedButton" type="button">ดูรายการจำหน่ายแล้ว</button>
           </article>
+
+          <article class="choice-card green">
+            <span class="choice-number">ตัวเลือก 6</span>
+            <h3>ดูตามผู้รับผิดชอบ</h3>
+            <p>รวมครุภัณฑ์ตามช่องผู้รับผิดชอบ เช่น งานพัสดุ งานธุรการ หรือครูผู้ดูแล</p>
+            <button id="showOwnersButton" type="button">ดูตามผู้รับผิดชอบ</button>
+          </article>
         </div>
       </section>
 
@@ -102,6 +109,18 @@
         </div>
 
         <div class="category-grid" id="nameGrid"></div>
+      </section>
+
+      <section class="view" id="ownerView">
+        <div class="section-heading">
+          <div>
+            <p>ตัวเลือก 6</p>
+            <h2>เลือกผู้รับผิดชอบ</h2>
+          </div>
+          <button class="light-button" data-go-home type="button">กลับหน้าแรก</button>
+        </div>
+
+        <div class="category-grid" id="ownerGrid"></div>
       </section>
 
       <section class="view" id="itemsView">
@@ -177,6 +196,7 @@
               <label class="wide">อัปโหลดภาพจากเครื่อง<input id="formImageFile" type="file" accept="image/*" multiple></label>
               <label class="wide">ถ่ายภาพด้วยกล้องมือถือ<input id="formCameraFile" type="file" accept="image/*" capture="environment"></label>
               <label class="wide">ชื่อ/หมายเหตุรูปภาพ<input id="formImage" placeholder="เช่น รูปตู้เก็บเอกสาร"></label>
+              <div class="wide image-manager" id="imageManager"></div>
               <label class="wide">หมายเหตุ<textarea id="formNote" rows="3" placeholder="รายละเอียดเพิ่มเติม"></textarea></label>
             </div>
             <div class="form-actions">
