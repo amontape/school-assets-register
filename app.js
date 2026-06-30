@@ -876,7 +876,7 @@ function renderItems(category, selectedItemName = "") {
   } else {
     items.forEach((item, index) => {
       const button = document.createElement("button");
-      button.className = "item-button";
+      button.className = `item-button${hasAssetPhoto(item) ? " has-photo" : ""}`;
       button.type = "button";
       button.innerHTML = `<strong>${renderAssetName(item)}</strong><span>${escapeHtml(item.code || "ยังไม่มีรหัส")} | ${escapeHtml(item.location || "ยังไม่ระบุสถานที่")}</span>`;
       button.addEventListener("click", () => renderDetail(item, index));
@@ -905,7 +905,7 @@ function renderItemsByName(name, selectedItemName = "") {
   } else {
     items.forEach((item, index) => {
       const button = document.createElement("button");
-      button.className = "item-button";
+      button.className = `item-button${hasAssetPhoto(item) ? " has-photo" : ""}`;
       button.type = "button";
       button.innerHTML = `<strong>${escapeHtml(item.code || item.name || "-")}${hasAssetPhoto(item) ? '<span class="photo-badge">มีรูป</span>' : ""}</strong><span>${escapeHtml(item._sourceCategory)} | ${escapeHtml(displayDate(item.acquiredDate))}</span>`;
       button.addEventListener("click", () => renderDetail(item, index));
@@ -934,7 +934,7 @@ function renderItemsByOwner(owner, selectedItemName = "") {
   } else {
     items.forEach((item, index) => {
       const button = document.createElement("button");
-      button.className = "item-button";
+      button.className = `item-button${hasAssetPhoto(item) ? " has-photo" : ""}`;
       button.type = "button";
       button.innerHTML = `<strong>${renderAssetName(item)}</strong><span>${escapeHtml(item.code || "-")} | ${escapeHtml(item._sourceCategory)}</span>`;
       button.addEventListener("click", () => renderDetail(item, index));
@@ -963,7 +963,7 @@ function renderDisposedItems(selectedItemName = "") {
   } else {
     items.forEach((item, index) => {
       const button = document.createElement("button");
-      button.className = "item-button";
+      button.className = `item-button${hasAssetPhoto(item) ? " has-photo" : ""}`;
       button.type = "button";
       button.innerHTML = `<strong>${renderAssetName(item)}</strong><span>${escapeHtml(item.code || "-")} | ${escapeHtml(item._sourceCategory)}</span>`;
       button.addEventListener("click", () => renderDetail(item, index));
@@ -992,7 +992,7 @@ function renderItemsByYear(year, selectedItemName = "") {
   } else {
     items.forEach((item, index) => {
       const button = document.createElement("button");
-      button.className = "item-button";
+      button.className = `item-button${hasAssetPhoto(item) ? " has-photo" : ""}`;
       button.type = "button";
       button.innerHTML = `<strong>${renderAssetName(item)}</strong><span>${escapeHtml(item._sourceCategory)} | ${escapeHtml(item.code || "-")}</span>`;
       button.addEventListener("click", () => renderDetail(item, index));

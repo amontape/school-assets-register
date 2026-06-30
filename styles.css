@@ -339,6 +339,15 @@ main {
   background: #f8fbff;
 }
 
+.item-button.has-photo {
+  background: #f0fdf4;
+  border-color: #22c55e;
+}
+
+.item-button.has-photo:hover {
+  background: #dcfce7;
+}
+
 .item-button strong {
   display: block;
   font-size: 18px;
