@@ -881,6 +881,7 @@ function renderItems(category, selectedItemName = "") {
   document.querySelector("#selectedCategoryLabel").textContent = "ข้อมูลของหมวดที่กดเข้ามา";
 
   const itemList = document.querySelector("#itemList");
+  itemList.classList.remove("photo-grid-list");
   itemList.replaceChildren();
 
   const items = (assetData[category] ?? []).map((item, index) => ({
@@ -917,6 +918,7 @@ function renderItemsByName(name, selectedItemName = "") {
   document.querySelector("#selectedCategoryLabel").textContent = "รวมครุภัณฑ์ชื่อเดียวกัน";
 
   const itemList = document.querySelector("#itemList");
+  itemList.classList.remove("photo-grid-list");
   itemList.replaceChildren();
   const items = getAllAssetsWithSource().filter((item) => getAssetGroupName(item) === name);
   currentListItems = items;
@@ -946,6 +948,7 @@ function renderItemsByOwner(owner, selectedItemName = "") {
   document.querySelector("#selectedCategoryLabel").textContent = "รวมครุภัณฑ์ตามผู้รับผิดชอบ";
 
   const itemList = document.querySelector("#itemList");
+  itemList.classList.remove("photo-grid-list");
   itemList.replaceChildren();
   const items = getAllAssetsWithSource().filter((item) => getAssetOwnerGroup(item) === owner);
   currentListItems = items;
@@ -976,6 +979,7 @@ function renderItemsByPhotoStatus(status, selectedItemName = "") {
   document.querySelector("#selectedCategoryLabel").textContent = needsPhoto ? "รายการที่ยังไม่มีรูปภาพ" : "รายการที่มีรูปภาพแล้ว";
 
   const itemList = document.querySelector("#itemList");
+  itemList.classList.remove("photo-grid-list");
   itemList.replaceChildren();
   const items = getAllAssetsWithSource().filter((item) => needsPhoto ? !hasAssetPhoto(item) : hasAssetPhoto(item));
   currentListItems = items;
@@ -984,11 +988,17 @@ function renderItemsByPhotoStatus(status, selectedItemName = "") {
     itemList.innerHTML = `<div class="item-button"><strong>${needsPhoto ? "ไม่มีรายการค้างถ่ายภาพ" : "ยังไม่มีรายการที่มีรูป"}</strong><span>ระบบนับจากรูปที่อัปโหลดหรือถ่ายไว้ในแต่ละรายการ</span></div>`;
     renderDetail(null);
   } else {
+    itemList.classList.toggle("photo-grid-list", !needsPhoto);
     items.forEach((item, index) => {
       const button = document.createElement("button");
-      button.className = `item-button${hasAssetPhoto(item) ? " has-photo" : ""}`;
+      button.className = `item-button${hasAssetPhoto(item) ? " has-photo" : ""}${needsPhoto ? "" : " photo-tile"}`;
       button.type = "button";
-      button.innerHTML = `<strong>${renderAssetName(item)}</strong><span>${escapeHtml(item.code || "-")} | ${escapeHtml(item._sourceCategory)}</span>`;
+      if (needsPhoto) {
+        button.innerHTML = `<strong>${renderAssetName(item)}</strong><span>${escapeHtml(item.code || "-")} | ${escapeHtml(item._sourceCategory)}</span>`;
+      } else {
+        const image = getAssetImages(item)[0] || "";
+        button.innerHTML = `<img src="${image}" alt="${escapeHtml(item.name || "รูปครุภัณฑ์")}"><strong>${escapeHtml(item.name || "-")}</strong><span>${escapeHtml(item.code || "-")}</span>`;
+      }
       button.addEventListener("click", () => renderDetail(item, index));
       itemList.append(button);
     });
@@ -1005,6 +1015,7 @@ function renderDisposedItems(selectedItemName = "") {
   document.querySelector("#selectedCategoryLabel").textContent = "รายการจำหน่ายแล้วที่ยังเก็บข้อมูลไว้";
 
   const itemList = document.querySelector("#itemList");
+  itemList.classList.remove("photo-grid-list");
   itemList.replaceChildren();
   const items = getAllAssetsWithSource().filter((item) => item.disposed === "yes");
   currentListItems = items;
