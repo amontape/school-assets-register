@@ -392,6 +392,8 @@ function renderReturnContext(context, item) {
     renderItemsByName(context.replace("__name:", ""), item.name);
   } else if (context?.startsWith("__owner:")) {
     renderItemsByOwner(context.replace("__owner:", ""), item.name);
+  } else if (context?.startsWith("__photo:")) {
+    renderItemsByPhotoStatus(context.replace("__photo:", ""), item.name);
   } else if (context === "__disposed") {
     renderDisposedItems(item.name);
   } else {
@@ -424,6 +426,8 @@ function startCloudSync() {
       renderItemsByName(currentCategory.replace("__name:", ""), lastSavedItemName);
     } else if (currentCategory?.startsWith("__owner:")) {
       renderItemsByOwner(currentCategory.replace("__owner:", ""), lastSavedItemName);
+    } else if (currentCategory?.startsWith("__photo:")) {
+      renderItemsByPhotoStatus(currentCategory.replace("__photo:", ""), lastSavedItemName);
     } else if (currentCategory === "__disposed") {
       renderDisposedItems(lastSavedItemName);
     } else if (currentCategory) {
@@ -750,6 +754,7 @@ function renderAssetPhoto(item) {
 }
 
 function renderCategories() {
+  updateHeaderPhotoStats();
   const categoryGrid = document.querySelector("#categoryGrid");
   categoryGrid.replaceChildren();
 
@@ -778,6 +783,23 @@ function getAllAssetsWithSource() {
     _sourceCategory: category,
     _sourceIndex: index
   })));
+}
+
+function getPhotoStats() {
+  return getAllAssetsWithSource().reduce((stats, item) => {
+    if (hasAssetPhoto(item)) {
+      stats.done += 1;
+    } else {
+      stats.missing += 1;
+    }
+    return stats;
+  }, { done: 0, missing: 0 });
+}
+
+function updateHeaderPhotoStats() {
+  const stats = getPhotoStats();
+  document.querySelector("#photoDoneCount").textContent = stats.done;
+  document.querySelector("#photoMissingCount").textContent = stats.missing;
 }
 
 function renderYearGroups() {
@@ -930,6 +952,36 @@ function renderItemsByOwner(owner, selectedItemName = "") {
 
   if (items.length === 0) {
     itemList.innerHTML = `<div class="item-button"><strong>ยังไม่มีข้อมูลผู้รับผิดชอบนี้</strong><span>ตรวจช่องผู้รับผิดชอบอีกครั้ง</span></div>`;
+    renderDetail(null);
+  } else {
+    items.forEach((item, index) => {
+      const button = document.createElement("button");
+      button.className = `item-button${hasAssetPhoto(item) ? " has-photo" : ""}`;
+      button.type = "button";
+      button.innerHTML = `<strong>${renderAssetName(item)}</strong><span>${escapeHtml(item.code || "-")} | ${escapeHtml(item._sourceCategory)}</span>`;
+      button.addEventListener("click", () => renderDetail(item, index));
+      itemList.append(button);
+    });
+    const selectedItem = items.find((item) => item.name === selectedItemName) || items[0];
+    renderDetail(selectedItem, items.indexOf(selectedItem));
+  }
+
+  showView("items");
+}
+
+function renderItemsByPhotoStatus(status, selectedItemName = "") {
+  const needsPhoto = status === "missing";
+  currentCategory = `__photo:${status}`;
+  document.querySelector("#selectedCategoryTitle").textContent = needsPhoto ? "ครุภัณฑ์ที่ยังไม่ได้ถ่ายภาพ" : "ครุภัณฑ์ที่ถ่ายภาพแล้ว";
+  document.querySelector("#selectedCategoryLabel").textContent = needsPhoto ? "รายการที่ยังไม่มีรูปภาพ" : "รายการที่มีรูปภาพแล้ว";
+
+  const itemList = document.querySelector("#itemList");
+  itemList.replaceChildren();
+  const items = getAllAssetsWithSource().filter((item) => needsPhoto ? !hasAssetPhoto(item) : hasAssetPhoto(item));
+  currentListItems = items;
+
+  if (items.length === 0) {
+    itemList.innerHTML = `<div class="item-button"><strong>${needsPhoto ? "ไม่มีรายการค้างถ่ายภาพ" : "ยังไม่มีรายการที่มีรูป"}</strong><span>ระบบนับจากรูปที่อัปโหลดหรือถ่ายไว้ในแต่ละรายการ</span></div>`;
     renderDetail(null);
   } else {
     items.forEach((item, index) => {
@@ -1235,6 +1287,8 @@ async function deleteCurrentAsset() {
   } else if (currentCategory.startsWith("__owner:")) {
     renderOwnerGroups();
     renderItemsByOwner(currentCategory.replace("__owner:", ""));
+  } else if (currentCategory.startsWith("__photo:")) {
+    renderItemsByPhotoStatus(currentCategory.replace("__photo:", ""));
   } else {
     renderItems(sourceCategory);
   }
@@ -1455,6 +1509,8 @@ async function saveAsset(event) {
 }
 
 document.querySelector("#homeButton").addEventListener("click", () => showView("home"));
+document.querySelector("#photoDoneButton")?.addEventListener("click", () => renderItemsByPhotoStatus("done"));
+document.querySelector("#photoMissingButton")?.addEventListener("click", () => renderItemsByPhotoStatus("missing"));
 document.querySelector("#quickAddButton")?.addEventListener("click", startNewAsset);
 document.querySelector("#showCategoriesButton").addEventListener("click", () => showView("category"));
 document.querySelector("#showFormButton").addEventListener("click", startNewAsset);
@@ -1481,6 +1537,8 @@ document.querySelector("#backToCategoriesButton").addEventListener("click", () =
   } else if (currentCategory.startsWith("__owner:")) {
     renderOwnerGroups();
     showView("owner");
+  } else if (currentCategory.startsWith("__photo:")) {
+    showView("home");
   } else if (currentCategory === "__disposed") {
     showView("home");
   } else {

@@ -91,8 +91,48 @@ button {
 }
 
 .header-actions {
+  align-items: center;
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
+  justify-content: flex-end;
+}
+
+.photo-stat {
+  align-items: center;
+  border: 1px solid var(--line);
+  display: inline-flex;
+  gap: 7px;
+  padding: 9px 12px;
+}
+
+.photo-stat strong {
+  border-radius: 999px;
+  display: inline-block;
+  line-height: 1;
+  min-width: 28px;
+  padding: 5px 8px;
+  text-align: center;
+}
+
+.photo-stat-done {
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.photo-stat-done strong {
+  background: #22c55e;
+  color: #fff;
+}
+
+.photo-stat-missing {
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.photo-stat-missing strong {
+  background: #f97316;
+  color: #fff;
 }
 
 .school-logo {
