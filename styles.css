@@ -135,6 +135,16 @@ button {
   color: #fff;
 }
 
+.storage-stat {
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+.storage-stat strong {
+  background: #4f46e5;
+  color: #fff;
+}
+
 .school-logo {
   align-items: center;
   border: 3px solid #d7b45a;

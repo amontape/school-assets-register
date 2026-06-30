@@ -1,5 +1,6 @@
 const STORAGE_KEY = "schoolAssetRegisterData";
 const ASSETS_COLLECTION = "assets";
+const ESTIMATED_STORAGE_LIMIT_BYTES = 1024 * 1024 * 1024;
 const FIXED_GOVERNMENT = "สพม.พระนครศรีอยุธยา";
 const FIXED_ORGANIZATION = "โรงเรียนบางไทรวิทยา";
 const thaiSorter = new Intl.Collator("th", { numeric: true, sensitivity: "base" });
@@ -755,6 +756,7 @@ function renderAssetPhoto(item) {
 
 function renderCategories() {
   updateHeaderPhotoStats();
+  updateHeaderStorageStats();
   const categoryGrid = document.querySelector("#categoryGrid");
   categoryGrid.replaceChildren();
 
@@ -800,6 +802,35 @@ function updateHeaderPhotoStats() {
   const stats = getPhotoStats();
   document.querySelector("#photoDoneCount").textContent = stats.done;
   document.querySelector("#photoMissingCount").textContent = stats.missing;
+}
+
+function estimateStorageBytes() {
+  const text = JSON.stringify(assetData);
+  if (window.TextEncoder) {
+    return new TextEncoder().encode(text).length;
+  }
+  return text.length * 2;
+}
+
+function formatStorageSize(bytes) {
+  if (bytes >= 1024 * 1024) {
+    return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+  }
+  return `${(bytes / 1024).toFixed(1)} KB`;
+}
+
+function updateHeaderStorageStats() {
+  const bytes = estimateStorageBytes();
+  const percent = Math.max(0.01, bytes / ESTIMATED_STORAGE_LIMIT_BYTES * 100);
+  const percentText = percent >= 1 ? `${percent.toFixed(2)}%` : `${percent.toFixed(4)}%`;
+  const field = document.querySelector("#storagePercent");
+  const button = document.querySelector("#storageStatButton");
+  if (field) {
+    field.textContent = percentText;
+  }
+  if (button) {
+    button.title = `ใช้ประมาณ ${formatStorageSize(bytes)} จาก 1 GB (${percentText})`;
+  }
 }
 
 function renderYearGroups() {
