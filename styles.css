@@ -402,6 +402,15 @@ main {
   background: #dcfce7;
 }
 
+.item-button.is-disposed {
+  background: #fef2f2;
+  border-color: #ef4444;
+}
+
+.item-button.is-disposed:hover {
+  background: #fee2e2;
+}
+
 .item-button strong {
   display: block;
   font-size: 18px;

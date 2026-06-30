@@ -360,6 +360,10 @@ function renderAssetName(item, fallback = "-") {
   return `${name}${hasAssetPhoto(item) ? '<span class="photo-badge">มีรูป</span>' : ""}`;
 }
 
+function getItemButtonClass(item, extraClass = "") {
+  return `item-button${hasAssetPhoto(item) ? " has-photo" : ""}${item.disposed === "yes" ? " is-disposed" : ""}${extraClass ? ` ${extraClass}` : ""}`;
+}
+
 function getAssetOwnerGroup(item) {
   return String(item.owner || "").trim() || "ไม่ระบุผู้รับผิดชอบ";
 }
@@ -930,7 +934,7 @@ function renderItems(category, selectedItemName = "") {
   } else {
     items.forEach((item, index) => {
       const button = document.createElement("button");
-      button.className = `item-button${hasAssetPhoto(item) ? " has-photo" : ""}`;
+      button.className = getItemButtonClass(item);
       button.type = "button";
       button.innerHTML = `<strong>${renderAssetName(item)}</strong><span>${escapeHtml(item.code || "ยังไม่มีรหัส")} | ${escapeHtml(item.location || "ยังไม่ระบุสถานที่")}</span>`;
       button.addEventListener("click", () => renderDetail(item, index));
@@ -960,7 +964,7 @@ function renderItemsByName(name, selectedItemName = "") {
   } else {
     items.forEach((item, index) => {
       const button = document.createElement("button");
-      button.className = `item-button${hasAssetPhoto(item) ? " has-photo" : ""}`;
+      button.className = getItemButtonClass(item);
       button.type = "button";
       button.innerHTML = `<strong>${escapeHtml(item.code || item.name || "-")}${hasAssetPhoto(item) ? '<span class="photo-badge">มีรูป</span>' : ""}</strong><span>${escapeHtml(item._sourceCategory)} | ${escapeHtml(displayDate(item.acquiredDate))}</span>`;
       button.addEventListener("click", () => renderDetail(item, index));
@@ -990,7 +994,7 @@ function renderItemsByOwner(owner, selectedItemName = "") {
   } else {
     items.forEach((item, index) => {
       const button = document.createElement("button");
-      button.className = `item-button${hasAssetPhoto(item) ? " has-photo" : ""}`;
+      button.className = getItemButtonClass(item);
       button.type = "button";
       button.innerHTML = `<strong>${renderAssetName(item)}</strong><span>${escapeHtml(item.code || "-")} | ${escapeHtml(item._sourceCategory)}</span>`;
       button.addEventListener("click", () => renderDetail(item, index));
@@ -1022,7 +1026,7 @@ function renderItemsByPhotoStatus(status, selectedItemName = "") {
     itemList.classList.toggle("photo-grid-list", !needsPhoto);
     items.forEach((item, index) => {
       const button = document.createElement("button");
-      button.className = `item-button${hasAssetPhoto(item) ? " has-photo" : ""}${needsPhoto ? "" : " photo-tile"}`;
+      button.className = getItemButtonClass(item, needsPhoto ? "" : "photo-tile");
       button.type = "button";
       if (needsPhoto) {
         button.innerHTML = `<strong>${renderAssetName(item)}</strong><span>${escapeHtml(item.code || "-")} | ${escapeHtml(item._sourceCategory)}</span>`;
@@ -1057,7 +1061,7 @@ function renderDisposedItems(selectedItemName = "") {
   } else {
     items.forEach((item, index) => {
       const button = document.createElement("button");
-      button.className = `item-button${hasAssetPhoto(item) ? " has-photo" : ""}`;
+      button.className = getItemButtonClass(item);
       button.type = "button";
       button.innerHTML = `<strong>${renderAssetName(item)}</strong><span>${escapeHtml(item.code || "-")} | ${escapeHtml(item._sourceCategory)}</span>`;
       button.addEventListener("click", () => renderDetail(item, index));
@@ -1086,7 +1090,7 @@ function renderItemsByYear(year, selectedItemName = "") {
   } else {
     items.forEach((item, index) => {
       const button = document.createElement("button");
-      button.className = `item-button${hasAssetPhoto(item) ? " has-photo" : ""}`;
+      button.className = getItemButtonClass(item);
       button.type = "button";
       button.innerHTML = `<strong>${renderAssetName(item)}</strong><span>${escapeHtml(item._sourceCategory)} | ${escapeHtml(item.code || "-")}</span>`;
       button.addEventListener("click", () => renderDetail(item, index));
