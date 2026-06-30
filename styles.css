@@ -345,10 +345,10 @@ main {
 }
 
 .photo-badge {
-  background: #e8f2ff;
-  border: 1px solid #b9d3f2;
+  background: #dcfce7;
+  border: 1px solid #86efac;
   border-radius: 999px;
-  color: var(--blue-dark);
+  color: #166534;
   display: inline-block;
   font-size: 12px;
   font-weight: 700;
