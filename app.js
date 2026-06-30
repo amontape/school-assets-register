@@ -348,6 +348,15 @@ function getAssetImages(item) {
   return images;
 }
 
+function hasAssetPhoto(item) {
+  return getAssetImages(item).length > 0;
+}
+
+function renderAssetName(item, fallback = "-") {
+  const name = escapeHtml(item.name || fallback);
+  return `${name}${hasAssetPhoto(item) ? '<span class="photo-badge">มีรูป</span>' : ""}`;
+}
+
 function startCloudSync() {
   assetsCollection.onSnapshot((snapshot) => {
     const cloudData = emptyAssetGroups();
@@ -800,7 +809,7 @@ function renderItems(category, selectedItemName = "") {
       const button = document.createElement("button");
       button.className = "item-button";
       button.type = "button";
-      button.innerHTML = `<strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item.code || "ยังไม่มีรหัส")} | ${escapeHtml(item.location || "ยังไม่ระบุสถานที่")}</span>`;
+      button.innerHTML = `<strong>${renderAssetName(item)}</strong><span>${escapeHtml(item.code || "ยังไม่มีรหัส")} | ${escapeHtml(item.location || "ยังไม่ระบุสถานที่")}</span>`;
       button.addEventListener("click", () => renderDetail(item, index));
       itemList.append(button);
     });
@@ -829,7 +838,7 @@ function renderItemsByName(name, selectedItemName = "") {
       const button = document.createElement("button");
       button.className = "item-button";
       button.type = "button";
-      button.innerHTML = `<strong>${escapeHtml(item.code || item.name || "-")}</strong><span>${escapeHtml(item._sourceCategory)} | ${escapeHtml(displayDate(item.acquiredDate))}</span>`;
+      button.innerHTML = `<strong>${escapeHtml(item.code || item.name || "-")}${hasAssetPhoto(item) ? '<span class="photo-badge">มีรูป</span>' : ""}</strong><span>${escapeHtml(item._sourceCategory)} | ${escapeHtml(displayDate(item.acquiredDate))}</span>`;
       button.addEventListener("click", () => renderDetail(item, index));
       itemList.append(button);
     });
@@ -858,7 +867,7 @@ function renderDisposedItems(selectedItemName = "") {
       const button = document.createElement("button");
       button.className = "item-button";
       button.type = "button";
-      button.innerHTML = `<strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item.code || "-")} | ${escapeHtml(item._sourceCategory)}</span>`;
+      button.innerHTML = `<strong>${renderAssetName(item)}</strong><span>${escapeHtml(item.code || "-")} | ${escapeHtml(item._sourceCategory)}</span>`;
       button.addEventListener("click", () => renderDetail(item, index));
       itemList.append(button);
     });
@@ -887,7 +896,7 @@ function renderItemsByYear(year, selectedItemName = "") {
       const button = document.createElement("button");
       button.className = "item-button";
       button.type = "button";
-      button.innerHTML = `<strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item._sourceCategory)} | ${escapeHtml(item.code || "-")}</span>`;
+      button.innerHTML = `<strong>${renderAssetName(item)}</strong><span>${escapeHtml(item._sourceCategory)} | ${escapeHtml(item.code || "-")}</span>`;
       button.addEventListener("click", () => renderDetail(item, index));
       itemList.append(button);
     });
