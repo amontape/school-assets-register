@@ -1341,7 +1341,7 @@ async function deleteCurrentAsset() {
   const { item, sourceCategory, sourceIndex } = sourceRef;
   const sourceItems = assetData[sourceCategory] || [];
 
-  const ok = confirm(`ต้องการลบ "${item.name}" ใช่ไหม`);
+  const ok = confirm(`ยืนยันการลบครุภัณฑ์นี้ใช่ไหม?\n\nชื่อ: ${item.name || "-"}\nรหัส: ${item.code || "-"}\n\nเมื่อลบแล้วรายการนี้จะหายจากระบบ`);
   if (!ok) {
     return;
   }
