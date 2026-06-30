@@ -1099,6 +1099,50 @@ function renderItemsByYear(year, selectedItemName = "") {
   showView("items");
 }
 
+function renderDetailActions(item) {
+  return `
+    <div class="detail-actions">
+      <button class="primary-button" id="editAssetButton" type="button">แก้ไข</button>
+      <button class="primary-button" id="printAssetButton" type="button">พิมพ์ทะเบียน</button>
+      <button class="light-button" id="disposeAssetButton" type="button">${item.disposed === "yes" ? "ยกเลิกจำหน่าย" : "จำหน่ายแล้ว"}</button>
+      <button class="danger-button" id="deleteAssetButton" type="button">ลบครุภัณฑ์</button>
+    </div>
+  `;
+}
+
+function renderDetailTop(item, depreciation) {
+  const images = getAssetImages(item);
+  if (images.length === 0) {
+    return `
+      <div class="asset-photo">${renderAssetPhoto(item)}</div>
+      <h3>${escapeHtml(item.name)}</h3>
+      ${renderDetailActions(item)}
+    `;
+  }
+
+  return `
+    <div class="detail-photo-layout">
+      <div class="detail-photo-gallery">
+        ${images.map((image, index) => `<img src="${image}" alt="${escapeHtml(`${item.name || "รูปครุภัณฑ์"} ${index + 1}`)}">`).join("")}
+      </div>
+      <aside class="detail-summary-card">
+        <h3>${escapeHtml(item.name || "-")}</h3>
+        <dl>
+          <div><dt>รหัส</dt><dd>${escapeHtml(item.code || "-")}</dd></div>
+          <div><dt>หมวด</dt><dd>${escapeHtml(item.category || item._sourceCategory || "-")}</dd></div>
+          <div><dt>สถานที่</dt><dd>${escapeHtml(item.location || "-")}</dd></div>
+          <div><dt>ผู้รับผิดชอบ</dt><dd>${escapeHtml(item.owner || "-")}</dd></div>
+          <div><dt>วันที่ได้มา</dt><dd>${escapeHtml(displayDate(item.acquiredDate))}</dd></div>
+          <div><dt>จำนวน</dt><dd>${escapeHtml(item.quantity || "-")}</dd></div>
+          <div><dt>มูลค่ารวม</dt><dd>${formatMoney(depreciation.totalValue)}</dd></div>
+          <div><dt>สถานะ</dt><dd>${item.disposed === "yes" ? "จำหน่ายแล้ว" : "ยังใช้งานอยู่"}</dd></div>
+        </dl>
+        ${renderDetailActions(item)}
+      </aside>
+    </div>
+  `;
+}
+
 function renderDetail(item, index = -1) {
   const detailPanel = document.querySelector("#detailPanel");
   currentSelectedIndex = index;
@@ -1114,14 +1158,7 @@ function renderDetail(item, index = -1) {
 
   const depreciation = calculateDepreciation(item);
   detailPanel.innerHTML = `
-    <div class="asset-photo">${renderAssetPhoto(item)}</div>
-    <h3>${escapeHtml(item.name)}</h3>
-    <div class="detail-actions">
-      <button class="primary-button" id="editAssetButton" type="button">แก้ไข</button>
-      <button class="primary-button" id="printAssetButton" type="button">พิมพ์ทะเบียน</button>
-      <button class="light-button" id="disposeAssetButton" type="button">${item.disposed === "yes" ? "ยกเลิกจำหน่าย" : "จำหน่ายแล้ว"}</button>
-      <button class="danger-button" id="deleteAssetButton" type="button">ลบครุภัณฑ์</button>
-    </div>
+    ${renderDetailTop(item, depreciation)}
     <table class="detail-table">
       <tr><th>ส่วนราชการ</th><td>${escapeHtml(item.government || "-")}</td></tr>
       <tr><th>หน่วยงาน</th><td>${escapeHtml(item.organization || "-")}</td></tr>
