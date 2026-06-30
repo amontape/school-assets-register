@@ -1080,6 +1080,7 @@ function renderItemsByYear(year, selectedItemName = "") {
   document.querySelector("#selectedCategoryLabel").textContent = "รวมครุภัณฑ์ตามวันที่ได้มา";
 
   const itemList = document.querySelector("#itemList");
+  itemList.classList.remove("photo-grid-list");
   itemList.replaceChildren();
   const items = getAllAssetsWithSource().filter((item) => (getAssetYear(item) || "ไม่ระบุปี") === year);
   currentListItems = items;
